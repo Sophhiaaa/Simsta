@@ -278,7 +278,6 @@ function loadUserData() {
     console.log('User after load:', window.user);
     updateUI();
 };
-}
 
 function loadUserData() {
     console.log('loadUserData called');
