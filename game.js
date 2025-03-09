@@ -32,6 +32,7 @@ window.formatNumber = function(num) {
     return num.toString();
 };
 
+// Ensure addNotification matches script.js format
 window.addNotification = function(message, skipSave = true) {
     if (!window.user) return;
     window.user.notifications.unshift({
@@ -39,6 +40,11 @@ window.addNotification = function(message, skipSave = true) {
         message: message,
         timestamp: new Date().toLocaleTimeString()
     });
+    const toast = document.createElement('div');
+    toast.className = 'notification-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
     if (autoSaveEnabled && !skipSave) window.saveUserData();
     window.updateUI();
 };
@@ -393,6 +399,12 @@ window.saveProfileChanges = function() {
     const profilePic = profilePicInput.files[0];
     if (!newUsername) {
         alert('Need a cute username, girly!');
+        return;
+    }
+    // Check for duplicate usernames (excluding the current user)
+    const otherAccounts = window.accounts.filter((_, idx) => idx !== window.currentAccountIndex);
+    if (otherAccounts.some(account => account.username.toLowerCase() === newUsername.toLowerCase())) {
+        alert('Oops! That username is taken, pick another one, princess! 💕');
         return;
     }
     window.user.username = newUsername;
@@ -964,18 +976,19 @@ window.showShoutoutModal = function(postIndex) {
         accountDiv.style.margin = '5px 0';
         accountDiv.innerHTML = `
             <span>${account.username} (Followers: ${window.formatNumber(account.followers)})</span>
-            <button onclick="confirmShoutout(${postIndex}, ${index})" style="background: #ff99cc; margin-left: 10px;">Shoutout 🌟</button>
+            <button onclick="window.confirmShoutout(${postIndex}, '${account.id}')" style="background: #ff99cc; margin-left: 10px;">Shoutout 🌟</button>
         `;
         accountList.appendChild(accountDiv);
     });
 };
 
-window.confirmShoutout = function(postIndex, accountIndex) {
-    console.log('Confirming shoutout to account index:', accountIndex, 'for post index:', postIndex);
+window.confirmShoutout = function(postIndex, accountId) {
+    console.log('Confirming shoutout to account ID:', accountId, 'for post index:', postIndex);
 
-    // Validate account index
-    if (accountIndex < 0 || accountIndex >= window.accounts.length) {
-        console.error('Invalid account index:', accountIndex);
+    // Find the target account by ID
+    const accountIndex = window.accounts.findIndex(account => account.id === accountId);
+    if (accountIndex === -1) {
+        console.error('Invalid account ID:', accountId);
         window.addNotification('Oops, couldn’t find that account, babe! 😕', true);
         document.getElementById('shoutoutModal').remove();
         return;
@@ -1064,16 +1077,8 @@ window.confirmShoutout = function(postIndex, accountIndex) {
     window.lastShoutoutTime = now;
 
     // Save and update
-    if (typeof saveUserData === 'function') {
-        saveUserData(); // Save changes to storage
-    } else {
-        console.error('saveUserData function not found');
-    }
-    if (typeof updateUI === 'function') {
-        updateUI(); // Refresh the UI
-    } else {
-        console.error('updateUI function not found');
-    }
+    if (autoSaveEnabled) window.saveUserData();
+    window.updateUI();
 
     document.getElementById('shoutoutModal').remove();
 };
