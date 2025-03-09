@@ -21,6 +21,7 @@ window.accounts = [];
 window.currentAccountIndex = 0;
 window.user = null;
 let currentDeleteUI = null; // Track the active custom delete UI
+let tempMessage = null; // Track the temporary message globally
 
 function isLocalStorageAvailable() {
     try {
@@ -118,7 +119,7 @@ function saveUserData(showConfirmation = false) {
     }, 2000);
 }
 
-// Optimized loadUserData with auto-post and temporary UI message
+// Optimized loadUserData
 function loadUserData() {
     console.log('loadUserData called - Starting data load process');
     if (!isLocalStorageAvailable()) {
@@ -171,16 +172,6 @@ function loadUserData() {
         }
     }
 
-    // Show temporary UI message if no user data is loaded yet
-    let tempMessage = null;
-    if (!window.user) {
-        tempMessage = document.createElement('div');
-        tempMessage.id = 'tempLoadMessage';
-        tempMessage.textContent = 'Loading your data, princess! Posting a fab update for you… 🌟 Please wait a sec! 💕';
-        document.body.appendChild(tempMessage);
-        console.log('Displayed temporary load message');
-    }
-
     // Apply loaded data if available
     if (loadedData) {
         window.accounts = loadedData.accounts || [];
@@ -228,42 +219,6 @@ function loadUserData() {
         window.accounts = [];
         window.user = null;
         window.currentAccountIndex = 0;
-    }
-
-    // Update UI immediately after loading
-    updateUI();
-
-    // If user data was loaded or auto-post is needed, trigger auto-post and handle message
-    if (window.user && typeof window.generatePost === 'function') {
-        console.log('User data loaded, triggering auto-post on refresh');
-        window.generatePost(true); // Silent post (no "Generated a fab post!" notification)
-        window.addNotification('Posted a fab update for you on refresh, princess! 🌟', false);
-    } else if (tempMessage) {
-        // If no user data and auto-post is about to occur, show the message for 3 seconds
-        console.log('Setting timeout to remove temp message in 3000ms');
-        setTimeout(() => {
-            try {
-                if (tempMessage && tempMessage.parentNode) {
-                    tempMessage.style.opacity = '0';
-                    setTimeout(() => {
-                        try {
-                            if (tempMessage && tempMessage.parentNode) {
-                                tempMessage.remove();
-                                console.log('Temporary load message removed successfully');
-                            } else {
-                                console.log('Temporary load message not removed - element or parent missing');
-                            }
-                        } catch (e) {
-                            console.error('Error removing temp message:', e);
-                        }
-                    }, 500); // Fade-out transition
-                } else {
-                    console.log('Temporary load message not found for removal');
-                }
-            } catch (e) {
-                console.error('Error fading out temp message:', e);
-            }
-        }, 3000); // Reduced to 3 seconds for testing
     }
 
     console.log('loadUserData completed - final user state:', JSON.stringify(window.user, null, 2));
@@ -931,8 +886,81 @@ function resetGameFromAdmin() {
     }
 }
 
-// Load user data immediately on script load
-loadUserData();
+// Handle loading and UI updates after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM ready');
+
+    // Load user data
+    loadUserData();
+
+    // Show temporary message if no user data is loaded
+    if (!window.user) {
+        tempMessage = document.createElement('div');
+        tempMessage.id = 'tempLoadMessage';
+        tempMessage.textContent = 'Loading your data, princess! Posting a fab update for you… 🌟 Please wait a sec! 💕';
+        document.body.appendChild(tempMessage);
+        console.log('Displayed temporary load message');
+
+        // Set timeout to remove the message after 3 seconds
+        setTimeout(() => {
+            try {
+                if (tempMessage && tempMessage.parentNode) {
+                    tempMessage.style.opacity = '0';
+                    setTimeout(() => {
+                        try {
+                            if (tempMessage && tempMessage.parentNode) {
+                                tempMessage.remove();
+                                console.log('Temporary load message removed successfully');
+                            } else {
+                                console.log('Temporary load message not removed - element or parent missing');
+                            }
+                        } catch (e) {
+                            console.error('Error removing temp message:', e);
+                            // Fallback: hide and remove if removal fails
+                            if (tempMessage) {
+                                tempMessage.style.display = 'none';
+                                tempMessage.remove();
+                                console.log('Fallback: Temporary load message hidden and removed');
+                            }
+                        }
+                    }, 500); // Fade-out transition
+                } else {
+                    console.log('Temporary load message not found for removal');
+                }
+            } catch (e) {
+                console.error('Error fading out temp message:', e);
+                // Fallback: hide and remove if fade-out fails
+                if (tempMessage) {
+                    tempMessage.style.display = 'none';
+                    tempMessage.remove();
+                    console.log('Fallback: Temporary load message hidden and removed');
+                }
+            }
+        }, 3000); // 3 seconds timeout
+    }
+
+    // Update UI and trigger auto-post if needed
+    if (window.user && typeof window.generatePost === 'function') {
+        console.log('User data loaded, triggering auto-post on refresh');
+        window.generatePost(true); // Silent post
+        window.addNotification('Posted a fab update for you on refresh, princess! 🌟', false);
+    }
+
+    // Ensure UI is updated after everything
+    updateUI();
+
+    if (window.user) {
+        document.getElementById('signupSection').classList.add('hidden');
+        document.getElementById('appSection').classList.remove('hidden');
+        window.simulateOfflineGrowth();
+        window.startGrowthLoop();
+        if (window.virtualBaeActive) window.toggleVirtualBae();
+        if (window.paranoidMode) window.toggleParanoidMode();
+    } else {
+        document.getElementById('signupSection').classList.remove('hidden');
+        document.getElementById('appSection').classList.add('hidden');
+    }
+});
 
 // Auto-export on page close or refresh
 window.addEventListener('beforeunload', (e) => {
@@ -970,23 +998,6 @@ document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.shiftKey && e.key === 'A' && window.user && window.user.username.toLowerCase() === GAME_OWNER_USERNAME.toLowerCase()) {
         console.log('Ctrl+Shift+A pressed, showing password modal');
         showPasswordModal();
-    }
-});
-
-// Ensure UI updates after DOM is fully loaded
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM ready');
-    if (window.user) {
-        document.getElementById('signupSection').classList.add('hidden');
-        document.getElementById('appSection').classList.remove('hidden');
-        window.simulateOfflineGrowth();
-        window.startGrowthLoop();
-        if (window.virtualBaeActive) window.toggleVirtualBae();
-        if (window.paranoidMode) window.toggleParanoidMode();
-        updateUI();
-    } else {
-        document.getElementById('signupSection').classList.remove('hidden');
-        document.getElementById('appSection').classList.add('hidden');
     }
 });
 
