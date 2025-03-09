@@ -230,48 +230,10 @@ function loadUserData() {
         window.currentAccountIndex = 0;
     }
 
-    // Create "sophhiaa" and "ViviVelvet" accounts if none exist
-    if (window.accounts.length === 0) {
-        const defaultProfilePic = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC';
-        
-        const sophhiaaAccount = {
-            username: 'sophhiaa',
-            followers: 0,
-            posts: [],
-            money: 0,
-            notifications: [],
-            verified: false,
-            famous: false,
-            lastActive: Date.now(),
-            sponsored: false,
-            eventHosted: false,
-            profilePic: defaultProfilePic,
-            trashBin: []
-        };
-
-        const viviVelvetAccount = {
-            username: 'ViviVelvet',
-            followers: 0,
-            posts: [],
-            money: 0,
-            notifications: [],
-            verified: false,
-            famous: false,
-            lastActive: Date.now(),
-            sponsored: false,
-            eventHosted: false,
-            profilePic: defaultProfilePic,
-            trashBin: []
-        };
-
-        window.accounts.push(sophhiaaAccount, viviVelvetAccount);
-        window.currentAccountIndex = 0; // Default to "sophhiaa" as the active account
-        window.user = window.accounts[0];
-        window.addNotification('Created your fab accounts, sophhiaa and ViviVelvet! 💖', false);
-    }
-
-    // Initialize user if still null after loading
-    if (!window.user) {
+    // Initialize user if still null after loading (no default accounts)
+    if (!window.user && window.accounts.length === 0) {
+        window.user = null; // Keep user null to force signup
+    } else if (!window.user) {
         window.user = window.accounts[0] || {
             username: 'DefaultUser',
             followers: 0,
@@ -432,8 +394,8 @@ window.showAccountSwitcher = function() {
         div.style.margin = '5px 0';
         div.innerHTML = `
             <span>${account.username} (Followers: ${window.formatNumber(account.followers)}) ${index === window.currentAccountIndex ? '(Current) ✨' : ''}</span>
-            <button onclick="switchAccount(${index})" style="background: #ff99cc; margin-left: 10px;">Switch 🌟</button>
-            <button onclick="deleteAccount(${index})" style="background: #ff9999; margin-left: 5px;">Delete 🗑️</button>
+            <button onclick="window.switchAccount(${index})" style="background: #ff99cc; margin-left: 10px;">Switch 🌟</button>
+            <button onclick="window.deleteAccount(${index})" style="background: #ff9999; margin-left: 5px;">Delete 🗑️</button>
         `;
         accountList.appendChild(div);
     });
