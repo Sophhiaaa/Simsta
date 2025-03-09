@@ -19,8 +19,49 @@ window.accounts = [];
 window.currentAccountIndex = 0;
 window.user = null;
 let currentDeleteUI = null; // Track the active custom delete UI
-let notificationQueue = []; // Queue to manage notifications
-let isNotificationActive = false; // Flag to track active notification
+let notificationQueue = [];
+let isNotificationActive = false;
+
+window.addNotification = function(message, addToList = true) {
+    console.log('Notification queued:', message);
+    notificationQueue.push({ message, addToList });
+
+    if (!isNotificationActive) {
+        showNextNotification();
+    }
+};
+
+function showNextNotification() {
+    if (notificationQueue.length === 0) {
+        isNotificationActive = false;
+        return;
+    }
+
+    isNotificationActive = true;
+    const { message, addToList } = notificationQueue.shift();
+    console.log('Displaying notification:', message);
+
+    if (addToList && window.user && window.user.notifications) {
+        window.user.notifications.unshift({
+            id: Date.now(),
+            message: message,
+            timestamp: new Date().toLocaleTimeString()
+        });
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'notification-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            toast.remove();
+            showNextNotification(); // Show the next one after removal
+        }, 500); // Fade-out transition
+    }, 3000); // Display for 3 seconds
+}
 
 function isLocalStorageAvailable() {
     try {
