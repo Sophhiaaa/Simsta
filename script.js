@@ -117,13 +117,13 @@ function saveUserData(showConfirmation = false) {
     }, 2000);
 }
 
-// Optimized loadUserData to ensure data persistence on refresh
+// Optimized loadUserData to ensure immediate loading on refresh
 function loadUserData() {
     console.log('loadUserData called - Starting data load process');
     if (!isLocalStorageAvailable()) {
         console.error('localStorage not available');
         alert('Your browser does not support localStorage. Data cannot be loaded.');
-        return;
+        return false;
     }
 
     let loadedData = null;
@@ -139,6 +139,8 @@ function loadUserData() {
                 console.error('SessionStorage parse error:', e, 'Data:', sessionData);
                 sessionStorage.removeItem('simstaLatestAutoSave'); // Clear corrupted data
             }
+        } else {
+            console.log('No data in sessionStorage');
         }
     }
 
@@ -148,6 +150,7 @@ function loadUserData() {
         if (!savedData) {
             savedData = localStorage.getItem('simstaBackup');
             if (savedData) {
+                console.log('Found data in localStorage backup');
                 window.addNotification('Loaded backup save! 💾', false);
             }
         }
@@ -162,6 +165,8 @@ function loadUserData() {
                 localStorage.removeItem('simstaBackup');
                 loadedData = null; // Force default initialization
             }
+        } else {
+            console.log('No data in localStorage');
         }
     }
 
@@ -183,18 +188,24 @@ function loadUserData() {
 
         // Validate and initialize user data structure
         if (window.user) {
+            window.user.followers = Number(window.user.followers) || 0;
+            window.user.money = Number(window.user.money) || 0;
             window.user.posts = Array.isArray(window.user.posts) ? window.user.posts : [];
             window.user.notifications = Array.isArray(window.user.notifications) ? window.user.notifications : [];
             window.user.trashBin = Array.isArray(window.user.trashBin) ? window.user.trashBin : [];
+            window.user.lastActive = window.user.lastActive || Date.now();
             console.log('User loaded successfully - followers:', window.user.followers, 'posts count:', window.user.posts.length);
             window.addNotification('Auto-loaded last save from storage! 💾', false);
         } else if (window.accounts.length > 0) {
             // Fallback to first account if current index is invalid
             window.currentAccountIndex = 0;
             window.user = window.accounts[0];
+            window.user.followers = Number(window.user.followers) || 0;
+            window.user.money = Number(window.user.money) || 0;
             window.user.posts = Array.isArray(window.user.posts) ? window.user.posts : [];
             window.user.notifications = Array.isArray(window.user.notifications) ? window.user.notifications : [];
             window.user.trashBin = Array.isArray(window.user.trashBin) ? window.user.trashBin : [];
+            window.user.lastActive = window.user.lastActive || Date.now();
             console.log('Fallback to first account - user:', JSON.stringify(window.user, null, 2));
             window.addNotification('Loaded fallback account! 💾', false);
         } else {
@@ -205,18 +216,15 @@ function loadUserData() {
         console.log('No saved data found, initializing empty state');
         window.accounts = [];
         window.user = null;
+        window.currentAccountIndex = 0;
     }
 
-    // Only initialize a default user if no accounts exist and no data was loaded
-    if (!window.user && window.accounts.length === 0) {
-        window.user = null; // Force signup
-        console.log('No user and no accounts, showing signup');
-    }
-    updateUI(); // Update UI with loaded data
+    // Ensure UI updates immediately after loading
+    updateUI();
     console.log('loadUserData completed - final user state:', JSON.stringify(window.user, null, 2));
+    return !!window.user; // Return true if user data was loaded
 }
 
-// Rest of the functions remain unchanged (copied for completeness)
 function showSaveConfirmation() {
     let confirmation = document.getElementById('saveConfirmation');
     if (!confirmation) {
@@ -624,19 +632,38 @@ function updateUI() {
         return;
     }
 
-    document.getElementById('signupSection').classList.add('hidden');
-    document.getElementById('appSection').classList.remove('hidden');
+    // Ensure UI elements exist before updating
+    const signupSection = document.getElementById('signupSection');
+    const appSection = document.getElementById('appSection');
+    if (!signupSection || !appSection) {
+        console.error('Required UI elements missing: signupSection or appSection');
+        return;
+    }
+
+    signupSection.classList.add('hidden');
+    appSection.classList.remove('hidden');
 
     const usernameDisplay = document.getElementById('usernameDisplay');
+    const profilePicDisplay = document.getElementById('profilePicDisplay');
+    const followerCount = document.getElementById('followerCount');
+    const postCount = document.getElementById('postCount');
+    const moneyDisplay = document.getElementById('moneyDisplay');
+    const shopMoneyDisplay = document.getElementById('shopMoneyDisplay');
+
+    if (!usernameDisplay || !profilePicDisplay || !followerCount || !postCount || !moneyDisplay || !shopMoneyDisplay) {
+        console.error('Required UI elements missing for update');
+        return;
+    }
+
     usernameDisplay.textContent = window.user.username;
     usernameDisplay.classList.toggle('verified', window.user.verified);
     usernameDisplay.classList.toggle('famous', window.user.famous);
     usernameDisplay.classList.toggle('glitter', hasProfileGlitter);
-    document.getElementById('profilePicDisplay').src = window.user.profilePic;
-    document.getElementById('followerCount').textContent = window.formatNumber(window.user.followers);
-    document.getElementById('postCount').textContent = window.formatNumber(window.user.posts.length);
-    document.getElementById('moneyDisplay').textContent = `Money: $${window.formatNumber(window.user.money)}`;
-    document.getElementById('shopMoneyDisplay').textContent = window.formatNumber(window.user.money);
+    profilePicDisplay.src = window.user.profilePic;
+    followerCount.textContent = window.formatNumber(window.user.followers);
+    postCount.textContent = window.formatNumber(window.user.posts.length);
+    moneyDisplay.textContent = `Money: $${window.formatNumber(window.user.money)}`;
+    shopMoneyDisplay.textContent = window.formatNumber(window.user.money);
 
     const activeTab = document.querySelector('.tab-button.active');
     if (activeTab) {
@@ -809,7 +836,7 @@ function resetGameFromAdmin() {
     }
 }
 
-// Load user data immediately on page load
+// Load user data immediately on script load
 loadUserData();
 
 // Auto-export on page close or refresh
@@ -851,6 +878,7 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// Ensure UI updates after DOM is fully loaded, but only if data wasn't loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM ready');
     if (window.user) {
