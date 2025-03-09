@@ -3,7 +3,6 @@ console.log('game.js starting');
 // Game-specific variables
 window.currentSortMode = window.currentSortMode || 'highest';
 let lastManualPostTime = 0;
-window.lastGeneratePostTime = 0; // Added for generatePost cooldown
 window.debugLikes = true;
 
 // Utility Functions
@@ -40,11 +39,6 @@ window.addNotification = function(message, skipSave = true) {
         message: message,
         timestamp: new Date().toLocaleTimeString()
     });
-    const toast = document.createElement('div');
-    toast.className = 'notification-toast';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
     if (autoSaveEnabled && !skipSave) window.saveUserData();
     window.updateUI();
 };
@@ -229,11 +223,12 @@ window.toggleParanoidMode = function() {
 
 window.generatePost = function(silent = false) {
     console.log('Generate Post clicked!');
+    let lastPostTime = window.lastGeneratePostTime || 0;
     const now = Date.now();
     const cooldown = 800;
 
-    if (now - window.lastGeneratePostTime < cooldown) {
-        console.log('Cooldown active, skipping post. Time left:', (cooldown - (now - window.lastGeneratePostTime)) / 1000, 'seconds');
+    if (now - lastPostTime < cooldown) {
+        console.log('Cooldown active, skipping post. Time left:', (cooldown - (now - lastPostTime)) / 1000, 'seconds');
         window.addNotification('Slow down, queen! Wait a sec to post again! ⏳', false);
         return;
     }
@@ -964,24 +959,23 @@ window.showShoutoutModal = function(postIndex) {
 
     const accountList = document.getElementById('accountSelectList');
     window.accounts.forEach((account, index) => {
-        if (account.id === window.currentAccountId) return; // Skip the current account
+        if (index === window.currentAccountIndex) return; // Skip the current account
         const accountDiv = document.createElement('div');
         accountDiv.style.margin = '5px 0';
         accountDiv.innerHTML = `
             <span>${account.username} (Followers: ${window.formatNumber(account.followers)})</span>
-            <button onclick="window.confirmShoutout(${postIndex}, '${account.id}')" style="background: #ff99cc; margin-left: 10px;">Shoutout 🌟</button>
+            <button onclick="confirmShoutout(${postIndex}, ${index})" style="background: #ff99cc; margin-left: 10px;">Shoutout 🌟</button>
         `;
         accountList.appendChild(accountDiv);
     });
 };
 
-window.confirmShoutout = function(postIndex, accountId) {
-    console.log('Confirming shoutout to account ID:', accountId, 'for post index:', postIndex);
+window.confirmShoutout = function(postIndex, accountIndex) {
+    console.log('Confirming shoutout to account index:', accountIndex, 'for post index:', postIndex);
 
-    // Validate account ID
-    const shoutedAccount = window.accounts.find(account => account.id === accountId);
-    if (!shoutedAccount) {
-        console.error('Invalid account ID:', accountId);
+    // Validate account index
+    if (accountIndex < 0 || accountIndex >= window.accounts.length) {
+        console.error('Invalid account index:', accountIndex);
         window.addNotification('Oops, couldn’t find that account, babe! 😕', true);
         document.getElementById('shoutoutModal').remove();
         return;
@@ -996,6 +990,7 @@ window.confirmShoutout = function(postIndex, accountId) {
         return;
     }
 
+    const shoutedAccount = window.accounts[accountIndex];
     const now = Date.now();
 
     // Create shoutout post
@@ -1069,82 +1064,18 @@ window.confirmShoutout = function(postIndex, accountId) {
     window.lastShoutoutTime = now;
 
     // Save and update
-    if (autoSaveEnabled) window.saveUserData();
-    window.updateUI();
+    if (typeof saveUserData === 'function') {
+        saveUserData(); // Save changes to storage
+    } else {
+        console.error('saveUserData function not found');
+    }
+    if (typeof updateUI === 'function') {
+        updateUI(); // Refresh the UI
+    } else {
+        console.error('updateUI function not found');
+    }
 
     document.getElementById('shoutoutModal').remove();
-};
-
-// Save and Load with localStorage
-window.saveUserData = function(force = false) {
-    if (autoSaveEnabled || force) {
-        const userData = {
-            username: window.user.username,
-            followers: window.user.followers,
-            posts: window.user.posts,
-            money: window.user.money,
-            notifications: window.user.notifications,
-            profilePic: window.user.profilePic,
-            sponsored: window.user.sponsored,
-            eventHosted: window.user.eventHosted,
-            theme: window.user.theme,
-            verified: window.user.verified,
-            famous: window.user.famous,
-            loyalty: window.user.loyalty,
-            lastActive: Date.now(),
-            lastDailyReward: window.lastDailyReward,
-            lastShoutoutTime: window.lastShoutoutTime,
-            trashBin: window.user.trashBin
-        };
-        localStorage.setItem('simstaUserData_' + window.currentAccountId, JSON.stringify(userData));
-        const saveConfirmation = document.getElementById('saveConfirmation');
-        saveConfirmation.textContent = 'Saved, babe! 💾';
-        saveConfirmation.style.display = 'block';
-        setTimeout(() => saveConfirmation.style.display = 'none', 2000);
-    }
-};
-
-window.loadUserData = function() {
-    const savedData = localStorage.getItem('simstaUserData_' + window.currentAccountId);
-    if (savedData) {
-        window.user = JSON.parse(savedData);
-        window.shoutoutStreak = window.user.loyalty ? Math.floor(window.user.loyalty / 10) : 0;
-        window.lastShoutoutTime = window.user.lastShoutoutTime || 0;
-        window.lastDailyReward = window.user.lastDailyReward || 0;
-        if (window.user.theme) document.body.classList.add(`${window.user.theme}-theme`);
-        window.simulateOfflineGrowth();
-        window.updateUI();
-    }
-};
-
-// Update UI to work with new navigation
-window.updateUI = function() {
-    if (window.user) {
-        document.getElementById('followerCount').textContent = window.formatNumber(window.user.followers);
-        document.getElementById('postCount').textContent = window.user.posts ? window.user.posts.length : 0;
-        document.getElementById('moneyDisplay').textContent = `Money: $${window.formatNumber(window.user.money)}`;
-        document.getElementById('usernameDisplay').textContent = window.user.username;
-        document.getElementById('profilePicDisplay').src = window.user.profilePic || '';
-        document.getElementById('shopMoneyDisplay').textContent = window.formatNumber(window.user.money);
-        if (hasProfileGlitter) {
-            document.getElementById('usernameDisplay').classList.add('glitter');
-        }
-        if (window.user.verified) {
-            document.getElementById('usernameDisplay').classList.add('verified');
-        }
-        if (window.user.famous) {
-            document.getElementById('usernameDisplay').classList.add('famous');
-        }
-        if (!document.getElementById('postsTab').classList.contains('hidden')) window.renderPosts();
-        if (!document.getElementById('notificationsTab').classList.contains('hidden')) window.renderNotifications();
-        if (!document.getElementById('likesTab').classList.contains('hidden')) window.renderLikes();
-        if (!document.getElementById('commentsTab').classList.contains('hidden')) window.renderComments();
-        if (!document.getElementById('generatedAccountsTab').classList.contains('hidden')) window.renderGeneratedPosts();
-        if (!document.getElementById('profileTab').classList.contains('hidden')) window.renderProfileTab();
-        if (!document.getElementById('aiAccountsTab').classList.contains('hidden')) window.renderAIAccounts();
-        if (!document.getElementById('messagesTab').classList.contains('hidden')) window.renderMessages();
-        if (!document.getElementById('shopTab').classList.contains('hidden')) window.renderShopTab();
-    }
 };
 
 // Initialization
