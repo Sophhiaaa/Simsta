@@ -45,7 +45,7 @@ function isSessionStorageAvailable() {
     }
 }
 
-// Enhanced saveUserData with better account handling and debugging
+// Enhanced saveUserData with better account handling and detailed debugging
 function saveUserData(showConfirmation = false) {
     if (!window.user) {
         console.log('No user to save');
@@ -57,17 +57,17 @@ function saveUserData(showConfirmation = false) {
     }
     // Update the current account in the accounts array
     window.accounts[window.currentAccountIndex] = window.user;
-    console.log('Saving user data:', JSON.stringify(window.user, null, 2)); // Debug: Log the full user object
+    console.log('Saving user data - username:', window.user.username, 'followers:', window.user.followers, 'posts count:', window.user.posts.length, 'full object:', JSON.stringify(window.user, null, 2)); // Detailed debug log
     if (saveTimeout) clearTimeout(saveTimeout);
     saveTimeout = setTimeout(() => {
         try {
             const minimalData = {
                 accounts: window.accounts.map(account => ({
-                    id: account.id, // Ensure ID is saved
+                    id: account.id,
                     username: account.username,
-                    followers: account.followers, // Ensure followers are saved
+                    followers: account.followers,
                     money: account.money,
-                    posts: account.posts, // Save all posts
+                    posts: account.posts, // Save all posts without slicing
                     verified: account.verified,
                     famous: account.famous,
                     profilePic: account.profilePic,
@@ -76,10 +76,10 @@ function saveUserData(showConfirmation = false) {
                     sponsored: account.sponsored || false,
                     eventHosted: account.eventHosted || false,
                     lastActive: account.lastActive || Date.now(),
-                    trashBin: account.trashBin || [] // Ensure trashBin is saved
+                    trashBin: account.trashBin || []
                 })),
-                generatedAccounts: Object.fromEntries(Object.entries(generatedAccounts).slice(0, 5)), // Limit to 5 generated accounts
-                messages: messages.slice(0, 10), // Limit to 10 messages
+                generatedAccounts: Object.fromEntries(Object.entries(generatedAccounts).slice(0, 5)),
+                messages: messages.slice(0, 10),
                 hasEngagementBoost,
                 hasProfileGlitter,
                 shoutoutStreak: window.shoutoutStreak || 0,
@@ -87,8 +87,8 @@ function saveUserData(showConfirmation = false) {
                 lastDailyReward: window.lastDailyReward || 0,
                 currentAccountIndex: window.currentAccountIndex
             };
-            const dataToSave = JSON.stringify(minimalData);
-            console.log('Data to save:', dataToSave); // Debug: Log the serialized data
+            const dataToSave = JSON.stringify(minimalData, null, 2); // Pretty print for readability
+            console.log('Serialized data to save:', dataToSave); // Debug: Log the full serialized data
             latestAutoSave = dataToSave;
             if (isSessionStorageAvailable()) {
                 try {
@@ -102,17 +102,17 @@ function saveUserData(showConfirmation = false) {
                 try {
                     localStorage.setItem('simstaAccounts', dataToSave);
                     localStorage.setItem('simstaBackup', dataToSave);
-                    console.log('Saved to localStorage');
+                    console.log('Saved to localStorage successfully');
                 } catch (e) {
                     console.warn('localStorage save failed (possibly full):', e);
                     isLocalStorageFull = true;
                     window.addNotification('Storage full! Using auto-exported files instead. 📤', false);
-                    window.exportUserData(true); // Auto-export to file on quota exceeded
+                    window.exportUserData(true);
                 }
             }
             if (showConfirmation) showSaveConfirmation();
         } catch (e) {
-            console.error('Save error:', e);
+            console.error('Save error:', e, 'Data attempted:', JSON.stringify(window.user));
         }
     }, 2000);
 }
@@ -140,9 +140,8 @@ function loadUserData() {
                 window.lastDailyReward = parsedData.lastDailyReward || 0;
                 window.currentAccountIndex = parsedData.currentAccountIndex || 0;
                 window.user = window.accounts[window.currentAccountIndex] || null;
-                console.log('Loaded from sessionStorage - accounts:', window.accounts, 'user:', window.user); // Debug: Log loaded data
+                console.log('Loaded from sessionStorage - accounts:', JSON.stringify(window.accounts, null, 2), 'user:', JSON.stringify(window.user, null, 2)); // Detailed debug log
                 if (window.user) {
-                    // Ensure all arrays are initialized
                     if (!Array.isArray(window.user.posts)) window.user.posts = [];
                     if (!Array.isArray(window.user.notifications)) window.user.notifications = [];
                     if (!Array.isArray(window.user.trashBin)) window.user.trashBin = [];
@@ -150,7 +149,7 @@ function loadUserData() {
                     return;
                 }
             } catch (e) {
-                console.error('SessionStorage parse error:', e);
+                console.error('SessionStorage parse error:', e, 'Data:', sessionData);
                 sessionStorage.removeItem('simstaLatestAutoSave');
             }
         }
@@ -178,13 +177,13 @@ function loadUserData() {
             window.currentAccountIndex = parsedData.currentAccountIndex || 0;
             window.user = window.accounts[window.currentAccountIndex] || null;
 
-            console.log('Loaded from localStorage - accounts:', window.accounts, 'user:', window.user); // Debug: Log loaded data
+            console.log('Loaded from localStorage - accounts:', JSON.stringify(window.accounts, null, 2), 'user:', JSON.stringify(window.user, null, 2)); // Detailed debug log
             if (window.user) {
                 window.user = {
-                    id: window.user.id || (window.user.username + '_' + Date.now()), // Ensure ID is preserved or generated
+                    id: window.user.id || (window.user.username + '_' + Date.now()),
                     username: window.user.username || 'DefaultUser',
                     followers: Number(window.user.followers) || 0,
-                    posts: Array.isArray(window.user.posts) ? window.user.posts : [], // Ensure posts are loaded
+                    posts: Array.isArray(window.user.posts) ? window.user.posts : [],
                     money: Number(window.user.money) || 0,
                     notifications: Array.isArray(window.user.notifications) ? window.user.notifications : [],
                     verified: window.user.verified || false,
@@ -205,15 +204,7 @@ function loadUserData() {
                     hashtags: Array.isArray(post.hashtags) ? post.hashtags : [],
                     imageData: post.imageData || ''
                 }));
-                Object.keys(generatedAccounts).forEach(username => {
-                    if (!generatedAccounts[username].followers) {
-                        generatedAccounts[username].followers = window.generateFollowers(Math.floor(Math.random() * 50) + 10);
-                    }
-                    if (!Array.isArray(generatedAccounts[username].posts)) {
-                        generatedAccounts[username].posts = [];
-                    }
-                });
-                console.log('User loaded successfully from localStorage with posts:', window.user.posts, 'followers:', window.user.followers);
+                console.log('User loaded successfully from localStorage with posts:', window.user.posts.length, 'followers:', window.user.followers);
             } else {
                 console.log('No valid user in saved data');
                 window.accounts = [];
@@ -221,7 +212,7 @@ function loadUserData() {
                 window.currentAccountIndex = 0;
             }
         } catch (e) {
-            console.error('Parse error in saved data:', e);
+            console.error('Parse error in saved data:', e, 'Data:', savedData);
             alert('Failed to load saved data. Resetting.');
             window.accounts = [];
             window.user = null;
@@ -278,7 +269,7 @@ function exportUserData(isAutoExport = false) {
 
     // Calculate total followers across all accounts
     const totalFollowers = window.accounts.reduce((sum, account) => sum + (account.followers || 0), 0);
-    const formattedFollowers = window.formatNumber(totalFollowers); // Use formatNumber for readability (e.g., "3.5K")
+    const formattedFollowers = window.formatNumber(totalFollowers);
 
     const data = {
         followersSummary: `Total followers across all accounts: ${formattedFollowers} 🌟`,
@@ -293,7 +284,7 @@ function exportUserData(isAutoExport = false) {
         currentAccountIndex: window.currentAccountIndex
     };
 
-    const dataStr = JSON.stringify(data);
+    const dataStr = JSON.stringify(data, null, 2);
     latestAutoSave = dataStr;
     if (isSessionStorageAvailable()) {
         try {
@@ -307,7 +298,6 @@ function exportUserData(isAutoExport = false) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    // Shortened filename with just username and followers
     link.download = isAutoExport 
         ? `simsta_${window.user.username}_auto_${formattedFollowers}.json` 
         : `simsta_${window.user.username}_${formattedFollowers}.json`;
@@ -347,15 +337,16 @@ function importUserData(event) {
             if (window.user) {
                 if (!Array.isArray(window.user.posts)) window.user.posts = [];
                 if (!Array.isArray(window.user.notifications)) window.user.notifications = [];
-                if (!Array.isArray(window.user.trashBin)) window.user.trashBin = []; // Ensure trashBin exists
+                if (!Array.isArray(window.user.trashBin)) window.user.trashBin = [];
             }
+            console.log('Imported data - user:', JSON.stringify(window.user, null, 2));
             saveUserData();
             window.addNotification('Data imported, slay! 📥', false);
             updateUI();
             if (window.growthLoopId) clearInterval(window.growthLoopId);
             window.startGrowthLoop();
         } catch (err) {
-            console.error('Import error:', err);
+            console.error('Import error:', err, 'Data:', e.target.result);
             alert('Failed to import data.');
         }
     };
@@ -382,7 +373,6 @@ window.addNotification = function(message, addToList = true) {
             timestamp: new Date().toLocaleTimeString()
         });
     }
-    // Show toast notification
     const toast = document.createElement('div');
     toast.className = 'notification-toast';
     toast.textContent = message;
@@ -422,7 +412,7 @@ window.switchAccount = function(index) {
     updateUI();
     if (window.growthLoopId) clearInterval(window.growthLoopId);
     window.startGrowthLoop();
-    window.addNotification(`Switched to ${window.user.username}, babe! ✨`, true); // Notify user of switch
+    window.addNotification(`Switched to ${window.user.username}, babe! ✨`, true);
 };
 
 // New deleteAccount function
@@ -499,14 +489,13 @@ window.createAccount = function() {
         return;
     }
 
-    // Check for duplicate usernames
     if (window.accounts.some(account => account.username.toLowerCase() === username.toLowerCase())) {
         alert('Oops! That username is taken, pick another one, princess! 💕');
         return;
     }
 
     const newUser = {
-        id: username + '_' + Date.now(), // Unique ID based on username and timestamp
+        id: username + '_' + Date.now(),
         username: username,
         followers: 0,
         posts: [],
@@ -518,7 +507,7 @@ window.createAccount = function() {
         eventHosted: false,
         profilePic: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
         money: 0,
-        trashBin: [] // Initialize trashBin for new accounts
+        trashBin: []
     };
 
     if (profilePic && profilePic.size <= 1 * 1024 * 1024) {
@@ -599,7 +588,7 @@ function resetAccount() {
             eventHosted: false,
             profilePic: window.user.profilePic,
             money: 0,
-            trashBin: [] // Initialize trashBin for reset accounts
+            trashBin: []
         };
         window.accounts[window.currentAccountIndex] = newUser;
         window.user = newUser;
@@ -653,7 +642,6 @@ window.renderTrashBin = function() {
         trashBin.innerHTML = '<p>No trashed posts yet, babe! 🌸</p>';
     }
     trashSection.appendChild(trashBin);
-    // Remove existing trash section if it exists
     const existingTrash = document.getElementById('trashSection');
     if (existingTrash) existingTrash.remove();
     feed.parentNode.insertBefore(trashSection, feed.nextSibling);
@@ -671,7 +659,7 @@ function updateUI() {
         document.getElementById('adminPanel').classList.add('hidden');
         document.getElementById('passwordModal').classList.add('hidden');
         document.getElementById('accountSwitcherModal').classList.add('hidden');
-        if (currentDeleteUI) currentDeleteUI.remove(); // Clean up custom UI
+        if (currentDeleteUI) currentDeleteUI.remove();
         return;
     }
 
@@ -694,8 +682,8 @@ function updateUI() {
         const tabId = activeTab.onclick.toString().match(/'([^']+)'/)[1];
         switch (tabId) {
             case 'postsTab':
-                window.renderPosts(); // Ensure posts (including shoutouts) are rendered
-                window.renderTrashBin(); // Render trash bin for posts tab
+                window.renderPosts();
+                window.renderTrashBin();
                 break;
             case 'notificationsTab':
                 window.renderNotifications();
@@ -724,7 +712,6 @@ function updateUI() {
         }
     }
 
-    // Restrict admin access based on ownership
     const isOwner = window.user.username.toLowerCase() === GAME_OWNER_USERNAME.toLowerCase();
     const adminTrigger = document.getElementById('adminTrigger');
     if (adminTrigger) {
@@ -735,11 +722,9 @@ function updateUI() {
         document.getElementById('passwordModal').classList.add('hidden');
     }
 
-    // Ensure growth loop restarts after UI update
     if (window.growthLoopId) clearInterval(window.growthLoopId);
     window.startGrowthLoop();
 
-    // Save data if autosave is enabled
     if (autoSaveEnabled) saveUserData();
 }
 
@@ -766,7 +751,6 @@ function showTab(tabId) {
 }
 
 function showPasswordModal() {
-    // Only show password modal if user is the owner
     if (window.user && window.user.username.toLowerCase() === GAME_OWNER_USERNAME.toLowerCase()) {
         document.getElementById('passwordModal').classList.remove('hidden');
     } else {
@@ -870,7 +854,7 @@ loadUserData();
 window.addEventListener('beforeunload', (e) => {
     if (window.user) {
         try {
-            const dataToSave = JSON.stringify({ 
+            const dataToSave = JSON.stringify({
                 accounts: window.accounts,
                 generatedAccounts,
                 messages,
@@ -880,7 +864,8 @@ window.addEventListener('beforeunload', (e) => {
                 lastShoutoutTime: window.lastShoutoutTime,
                 lastDailyReward: window.lastDailyReward,
                 currentAccountIndex: window.currentAccountIndex
-            });
+            }, null, 2);
+            console.log('Before unload data:', dataToSave); // Debug: Log data before unload
             latestAutoSave = dataToSave;
             if (isSessionStorageAvailable()) {
                 sessionStorage.setItem('simstaLatestAutoSave', dataToSave);
