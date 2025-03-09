@@ -19,49 +19,9 @@ window.accounts = [];
 window.currentAccountIndex = 0;
 window.user = null;
 let currentDeleteUI = null; // Track the active custom delete UI
-let notificationQueue = [];
-let isNotificationActive = false;
-
-window.addNotification = function(message, addToList = true) {
-    console.log('Notification queued:', message);
-    notificationQueue.push({ message, addToList });
-
-    if (!isNotificationActive) {
-        showNextNotification();
-    }
-};
-
-function showNextNotification() {
-    if (notificationQueue.length === 0) {
-        isNotificationActive = false;
-        return;
-    }
-
-    isNotificationActive = true;
-    const { message, addToList } = notificationQueue.shift();
-    console.log('Displaying notification:', message);
-
-    if (addToList && window.user && window.user.notifications) {
-        window.user.notifications.unshift({
-            id: Date.now(),
-            message: message,
-            timestamp: new Date().toLocaleTimeString()
-        });
-    }
-
-    const toast = document.createElement('div');
-    toast.className = 'notification-toast';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => {
-            toast.remove();
-            showNextNotification(); // Show the next one after removal
-        }, 500); // Fade-out transition
-    }, 3000); // Display for 3 seconds
-}
+let notificationQueue = []; // Queue to manage notifications
+let isNotificationActive = false; // Flag to track active notification
+window.isUserLoaded = false; // Flag to signal when user is loaded
 
 function isLocalStorageAvailable() {
     try {
@@ -105,19 +65,19 @@ function saveUserData(showConfirmation = false) {
                     username: account.username,
                     followers: account.followers,
                     money: account.money,
-                    posts: account.posts.slice(0, 20), // Limit to 20 posts
+                    posts: account.posts.slice(0, 20), // Limit to 20 posts to reduce size
                     verified: account.verified,
                     famous: account.famous,
                     profilePic: account.profilePic,
                     theme: account.theme,
-                    notifications: account.notifications ? account.notifications.slice(0, 10) : [],
+                    notifications: account.notifications ? account.notifications.slice(0, 10) : [], // Limit to 10 notifications
                     sponsored: account.sponsored || false,
                     eventHosted: account.eventHosted || false,
                     lastActive: account.lastActive || Date.now(),
-                    trashBin: account.trashBin ? account.trashBin.slice(0, 10) : []
+                    trashBin: account.trashBin ? account.trashBin.slice(0, 10) : [] // Limit to 10 trashed posts
                 })),
-                generatedAccounts: Object.fromEntries(Object.entries(generatedAccounts).slice(0, 5)),
-                messages: messages.slice(0, 10),
+                generatedAccounts: Object.fromEntries(Object.entries(generatedAccounts).slice(0, 5)), // Limit to 5 generated accounts
+                messages: messages.slice(0, 10), // Limit to 10 messages
                 hasEngagementBoost,
                 hasProfileGlitter,
                 shoutoutStreak: window.shoutoutStreak,
@@ -127,13 +87,29 @@ function saveUserData(showConfirmation = false) {
             };
             const dataToSave = JSON.stringify(minimalData);
             latestAutoSave = dataToSave;
-            console.log('Saved data, length:', dataToSave.length);
+            console.log('latestAutoSave set, length:', dataToSave.length);
             if (isSessionStorageAvailable()) {
-                sessionStorage.setItem('simstaLatestAutoSave', dataToSave);
+                try {
+                    sessionStorage.setItem('simstaLatestAutoSave', dataToSave);
+                    console.log('Saved to sessionStorage');
+                } catch (e) {
+                    console.warn('sessionStorage save failed:', e);
+                }
             }
             if (!isLocalStorageFull) {
-                localStorage.setItem('simstaAccounts', dataToSave);
-                localStorage.setItem('simstaBackup', dataToSave);
+                try {
+                    localStorage.setItem('simstaAccounts', dataToSave);
+                    localStorage.setItem('simstaBackup', dataToSave);
+                    console.log('Saved to localStorage');
+                } catch (e) {
+                    console.warn('localStorage save failed (possibly full):', e);
+                    isLocalStorageFull = true;
+                    if (!window.storageFullNotified) {
+                        window.addNotification('Storage full! Using auto-exported files instead. 📤', false);
+                        window.storageFullNotified = true;
+                    }
+                    window.exportUserData(true); // Auto-export to file on quota exceeded
+                }
             }
             if (showConfirmation) showSaveConfirmation();
         } catch (e) {
@@ -144,154 +120,55 @@ function saveUserData(showConfirmation = false) {
 
 function loadUserData() {
     console.log('loadUserData called');
-    if (!isLocalStorageAvailable()) {
-        console.error('localStorage is not available');
-        alert('Your browser does not support localStorage.');
-        return;
-    }
-
-    let savedData = localStorage.getItem('simstaAccounts');
-    if (!savedData) {
-        savedData = localStorage.getItem('simstaBackup');
-        if (savedData) {
-            window.addNotification('Loaded backup save! 💾', false);
+    try {
+        if (!isLocalStorageAvailable()) {
+            console.error('localStorage is not available');
+            alert('Your browser does not support localStorage.');
+            return;
         }
-    }
 
-    if (savedData) {
-        try {
-            const parsedData = JSON.parse(savedData);
-            window.accounts = parsedData.accounts || [];
-            window.generatedAccounts = parsedData.generatedAccounts || {};
-            window.messages = parsedData.messages || [];
-            hasEngagementBoost = parsedData.hasEngagementBoost || false;
-            hasProfileGlitter = parsedData.hasProfileGlitter || false;
-            window.shoutoutStreak = parsedData.shoutoutStreak || 0;
-            window.lastShoutoutTime = parsedData.lastShoutoutTime || 0;
-            window.lastDailyReward = parsedData.lastDailyReward || 0;
-            window.currentAccountIndex = parsedData.currentAccountIndex || 0;
-            window.user = window.accounts[window.currentAccountIndex] || null;
-
-            if (window.user) {
-                window.user = {
-                    username: window.user.username || 'DefaultUser',
-                    followers: Number(window.user.followers) || 0,
-                    posts: Array.isArray(window.user.posts) ? window.user.posts : [],
-                    money: Number(window.user.money) || 0,
-                    notifications: Array.isArray(window.user.notifications) ? window.user.notifications : [],
-                    verified: window.user.verified || false,
-                    famous: window.user.famous || false,
-                    lastActive: window.user.lastActive || Date.now(),
-                    sponsored: window.user.sponsored || false,
-                    eventHosted: window.user.eventHosted || false,
-                    profilePic: window.user.profilePic || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
-                    trashBin: window.user.trashBin || []
-                };
-                window.user.posts = window.user.posts.map(post => ({
-                    likes: Number(post.likes) || 0,
-                    comments: Array.isArray(post.comments) ? post.comments : [],
-                    isViral: post.isViral || false,
-                    isSuperViral: post.isSuperViral || false,
-                    liked: post.liked || false,
-                    caption: post.caption || '',
-                    hashtags: Array.isArray(post.hashtags) ? post.hashtags : [],
-                    imageData: post.imageData || ''
-                }));
-                console.log('User loaded successfully from localStorage:', window.user);
-            } else {
-                console.log('No valid user in saved data');
-                window.accounts = [];
-                window.user = null;
-                window.currentAccountIndex = 0;
+        if (isSessionStorageAvailable()) {
+            const sessionData = sessionStorage.getItem('simstaLatestAutoSave');
+            if (sessionData) {
+                try {
+                    const parsedData = JSON.parse(sessionData);
+                    window.accounts = parsedData.accounts || [];
+                    window.generatedAccounts = parsedData.generatedAccounts || {};
+                    window.messages = parsedData.messages || [];
+                    hasEngagementBoost = parsedData.hasEngagementBoost || false;
+                    hasProfileGlitter = parsedData.hasProfileGlitter || false;
+                    window.shoutoutStreak = parsedData.shoutoutStreak || 0;
+                    window.lastShoutoutTime = parsedData.lastShoutoutTime || 0;
+                    window.lastDailyReward = parsedData.lastDailyReward || 0;
+                    window.currentAccountIndex = parsedData.currentAccountIndex || 0;
+                    window.user = window.accounts[window.currentAccountIndex] || null;
+                    if (window.user) {
+                        console.log('Loaded from sessionStorage');
+                        window.addNotification('Auto-loaded last save from session! 💾', false);
+                        // Ensure posts and trashBin are properly initialized
+                        if (!Array.isArray(window.user.posts)) window.user.posts = [];
+                        if (!Array.isArray(window.user.trashBin)) window.user.trashBin = [];
+                        window.isUserLoaded = true; // Signal user is loaded
+                        return;
+                    }
+                } catch (e) {
+                    console.error('SessionStorage parse error:', e);
+                    sessionStorage.removeItem('simstaLatestAutoSave');
+                }
             }
-        } catch (e) {
-            console.error('Parse error in saved data:', e);
-            alert('Failed to load saved data. Resetting.');
-            window.accounts = [];
-            window.user = null;
-            window.currentAccountIndex = 0;
-            localStorage.removeItem('simstaAccounts');
-            localStorage.removeItem('simstaBackup');
         }
-    } else {
-        console.log('No saved data found');
-        window.accounts = [];
-        window.user = null;
-        window.currentAccountIndex = 0;
-    }
 
-    if (window.accounts.length === 0) {
-        const defaultProfilePic = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC';
-        const sophhiaaAccount = {
-            username: 'sophhiaa',
-            followers: 0,
-            posts: [],
-            money: 0,
-            notifications: [],
-            verified: false,
-            famous: false,
-            lastActive: Date.now(),
-            sponsored: false,
-            eventHosted: false,
-            profilePic: defaultProfilePic,
-            trashBin: []
-        };
-        const viviVelvetAccount = {
-            username: 'ViviVelvet',
-            followers: 0,
-            posts: [],
-            money: 0,
-            notifications: [],
-            verified: false,
-            famous: false,
-            lastActive: Date.now(),
-            sponsored: false,
-            eventHosted: false,
-            profilePic: defaultProfilePic,
-            trashBin: []
-        };
-        window.accounts.push(sophhiaaAccount, viviVelvetAccount);
-        window.currentAccountIndex = 0;
-        window.user = window.accounts[0];
-        window.addNotification('Created your fab accounts, sophhiaa and ViviVelvet! ❤️', false);
-    }
-
-    if (!window.user) {
-        window.user = window.accounts[0] || {
-            username: 'DefaultUser',
-            followers: 0,
-            posts: [],
-            money: 0,
-            notifications: [],
-            verified: false,
-            famous: false,
-            lastActive: Date.now(),
-            sponsored: false,
-            eventHosted: false,
-            profilePic: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
-            trashBin: []
-        };
-        if (!window.accounts.includes(window.user)) {
-            window.accounts.push(window.user);
+        let savedData = localStorage.getItem('simstaAccounts');
+        if (!savedData) {
+            savedData = localStorage.getItem('simstaBackup');
+            if (savedData) {
+                window.addNotification('Loaded backup save! 💾', false);
+            }
         }
-    }
-    console.log('User after load:', window.user);
-    updateUI();
-} 
 
-function loadUserData() {
-    console.log('loadUserData called');
-    if (!isLocalStorageAvailable()) {
-        console.error('localStorage is not available');
-        alert('Your browser does not support localStorage.');
-        return;
-    }
-
-    if (isSessionStorageAvailable()) {
-        const sessionData = sessionStorage.getItem('simstaLatestAutoSave');
-        if (sessionData) {
+        if (savedData) {
             try {
-                const parsedData = JSON.parse(sessionData);
+                const parsedData = JSON.parse(savedData);
                 window.accounts = parsedData.accounts || [];
                 window.generatedAccounts = parsedData.generatedAccounts || {};
                 window.messages = parsedData.messages || [];
@@ -302,160 +179,130 @@ function loadUserData() {
                 window.lastDailyReward = parsedData.lastDailyReward || 0;
                 window.currentAccountIndex = parsedData.currentAccountIndex || 0;
                 window.user = window.accounts[window.currentAccountIndex] || null;
+
                 if (window.user) {
-                    console.log('Loaded from sessionStorage');
-                    window.addNotification('Auto-loaded last save from session! 💾', false);
-                    // Ensure posts and trashBin are properly initialized
-                    if (!Array.isArray(window.user.posts)) window.user.posts = [];
-                    if (!Array.isArray(window.user.trashBin)) window.user.trashBin = [];
-                    return;
+                    window.user = {
+                        username: window.user.username || 'DefaultUser',
+                        followers: Number(window.user.followers) || 0,
+                        posts: Array.isArray(window.user.posts) ? window.user.posts : [],
+                        money: Number(window.user.money) || 0,
+                        notifications: Array.isArray(window.user.notifications) ? window.user.notifications : [],
+                        verified: window.user.verified || false,
+                        famous: window.user.famous || false,
+                        lastActive: window.user.lastActive || Date.now(),
+                        sponsored: window.user.sponsored || false,
+                        eventHosted: window.user.eventHosted || false,
+                        profilePic: window.user.profilePic || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
+                        trashBin: window.user.trashBin || []
+                    };
+                    window.user.posts = window.user.posts.map(post => ({
+                        likes: Number(post.likes) || 0,
+                        comments: Array.isArray(post.comments) ? post.comments : [],
+                        isViral: post.isViral || false,
+                        isSuperViral: post.isSuperViral || false,
+                        liked: post.liked || false,
+                        caption: post.caption || '',
+                        hashtags: Array.isArray(post.hashtags) ? post.hashtags : [],
+                        imageData: post.imageData || ''
+                    }));
+                    Object.keys(generatedAccounts).forEach(username => {
+                        if (!generatedAccounts[username].followers) {
+                            generatedAccounts[username].followers = window.generateFollowers(Math.floor(Math.random() * 50) + 10);
+                        }
+                        if (!Array.isArray(generatedAccounts[username].posts)) {
+                            generatedAccounts[username].posts = [];
+                        }
+                    });
+                    console.log('User loaded successfully from localStorage');
+                } else {
+                    console.log('No valid user in saved data');
+                    window.accounts = [];
+                    window.user = null;
+                    window.currentAccountIndex = 0;
                 }
             } catch (e) {
-                console.error('SessionStorage parse error:', e);
-                sessionStorage.removeItem('simstaLatestAutoSave');
-            }
-        }
-    }
-
-    let savedData = localStorage.getItem('simstaAccounts');
-    if (!savedData) {
-        savedData = localStorage.getItem('simstaBackup');
-        if (savedData) {
-            window.addNotification('Loaded backup save! 💾', false);
-        }
-    }
-
-    if (savedData) {
-        try {
-            const parsedData = JSON.parse(savedData);
-            window.accounts = parsedData.accounts || [];
-            window.generatedAccounts = parsedData.generatedAccounts || {};
-            window.messages = parsedData.messages || [];
-            hasEngagementBoost = parsedData.hasEngagementBoost || false;
-            hasProfileGlitter = parsedData.hasProfileGlitter || false;
-            window.shoutoutStreak = parsedData.shoutoutStreak || 0;
-            window.lastShoutoutTime = parsedData.lastShoutoutTime || 0;
-            window.lastDailyReward = parsedData.lastDailyReward || 0;
-            window.currentAccountIndex = parsedData.currentAccountIndex || 0;
-            window.user = window.accounts[window.currentAccountIndex] || null;
-
-            if (window.user) {
-                window.user = {
-                    username: window.user.username || 'DefaultUser',
-                    followers: Number(window.user.followers) || 0,
-                    posts: Array.isArray(window.user.posts) ? window.user.posts : [],
-                    money: Number(window.user.money) || 0,
-                    notifications: Array.isArray(window.user.notifications) ? window.user.notifications : [],
-                    verified: window.user.verified || false,
-                    famous: window.user.famous || false,
-                    lastActive: window.user.lastActive || Date.now(),
-                    sponsored: window.user.sponsored || false,
-                    eventHosted: window.user.eventHosted || false,
-                    profilePic: window.user.profilePic || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
-                    trashBin: window.user.trashBin || [] // Ensure trashBin is loaded
-                };
-                window.user.posts = window.user.posts.map(post => ({
-                    likes: Number(post.likes) || 0,
-                    comments: Array.isArray(post.comments) ? post.comments : [],
-                    isViral: post.isViral || false,
-                    isSuperViral: post.isSuperViral || false,
-                    liked: post.liked || false,
-                    caption: post.caption || '',
-                    hashtags: Array.isArray(post.hashtags) ? post.hashtags : [],
-                    imageData: post.imageData || ''
-                }));
-                Object.keys(generatedAccounts).forEach(username => {
-                    if (!generatedAccounts[username].followers) {
-                        generatedAccounts[username].followers = window.generateFollowers(Math.floor(Math.random() * 50) + 10);
-                    }
-                    if (!Array.isArray(generatedAccounts[username].posts)) {
-                        generatedAccounts[username].posts = [];
-                    }
-                });
-                console.log('User loaded successfully from localStorage');
-            } else {
-                console.log('No valid user in saved data');
+                console.error('Parse error in saved data:', e);
+                alert('Failed to load saved data. Resetting.');
                 window.accounts = [];
                 window.user = null;
                 window.currentAccountIndex = 0;
+                localStorage.removeItem('simstaAccounts');
+                localStorage.removeItem('simstaBackup');
             }
-        } catch (e) {
-            console.error('Parse error in saved data:', e);
-            alert('Failed to load saved data. Resetting.');
+        } else {
+            console.log('No saved data found');
             window.accounts = [];
             window.user = null;
             window.currentAccountIndex = 0;
-            localStorage.removeItem('simstaAccounts');
-            localStorage.removeItem('simstaBackup');
         }
-    } else {
-        console.log('No saved data found');
-        window.accounts = [];
-        window.user = null;
-        window.currentAccountIndex = 0;
-    }
 
-    // Create "sophhiaa" and "ViviVelvet" accounts if none exist
-    if (window.accounts.length === 0) {
-        const defaultProfilePic = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC';
-        
-        const sophhiaaAccount = {
-            username: 'sophhiaa',
-            followers: 0,
-            posts: [],
-            money: 0,
-            notifications: [],
-            verified: false,
-            famous: false,
-            lastActive: Date.now(),
-            sponsored: false,
-            eventHosted: false,
-            profilePic: defaultProfilePic,
-            trashBin: []
-        };
+        // Create "sophhiaa" and "ViviVelvet" accounts if none exist
+        if (window.accounts.length === 0) {
+            const defaultProfilePic = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC';
+            
+            const sophhiaaAccount = {
+                username: 'sophhiaa',
+                followers: 0,
+                posts: [],
+                money: 0,
+                notifications: [],
+                verified: false,
+                famous: false,
+                lastActive: Date.now(),
+                sponsored: false,
+                eventHosted: false,
+                profilePic: defaultProfilePic,
+                trashBin: []
+            };
 
-        const viviVelvetAccount = {
-            username: 'ViviVelvet',
-            followers: 0,
-            posts: [],
-            money: 0,
-            notifications: [],
-            verified: false,
-            famous: false,
-            lastActive: Date.now(),
-            sponsored: false,
-            eventHosted: false,
-            profilePic: defaultProfilePic,
-            trashBin: []
-        };
+            const viviVelvetAccount = {
+                username: 'ViviVelvet',
+                followers: 0,
+                posts: [],
+                money: 0,
+                notifications: [],
+                verified: false,
+                famous: false,
+                lastActive: Date.now(),
+                sponsored: false,
+                eventHosted: false,
+                profilePic: defaultProfilePic,
+                trashBin: []
+            };
 
-        window.accounts.push(sophhiaaAccount, viviVelvetAccount);
-        window.currentAccountIndex = 0; // Default to "sophhiaa" as the active account
-        window.user = window.accounts[0];
-        window.addNotification('Created your fab accounts, sophhiaa and ViviVelvet! 💖', false);
-    }
-
-    // Initialize user if still null after loading
-    if (!window.user) {
-        window.user = window.accounts[0] || {
-            username: 'DefaultUser',
-            followers: 0,
-            posts: [],
-            money: 0,
-            notifications: [],
-            verified: false,
-            famous: false,
-            lastActive: Date.now(),
-            sponsored: false,
-            eventHosted: false,
-            profilePic: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
-            trashBin: []
-        };
-        if (!window.accounts.includes(window.user)) {
-            window.accounts.push(window.user);
+            window.accounts.push(sophhiaaAccount, viviVelvetAccount);
+            window.currentAccountIndex = 0; // Default to "sophhiaa" as the active account
+            window.user = window.accounts[0];
+            window.addNotification('Created your fab accounts, sophhiaa and ViviVelvet! 💖', false);
         }
+
+        // Initialize user if still null after loading
+        if (!window.user) {
+            window.user = window.accounts[0] || {
+                username: 'DefaultUser',
+                followers: 0,
+                posts: [],
+                money: 0,
+                notifications: [],
+                verified: false,
+                famous: false,
+                lastActive: Date.now(),
+                sponsored: false,
+                eventHosted: false,
+                profilePic: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
+                trashBin: []
+            };
+            if (!window.accounts.includes(window.user)) {
+                window.accounts.push(window.user);
+            }
+        }
+        window.isUserLoaded = true; // Signal that user loading is complete
+        console.log('User after load:', window.user);
+        updateUI();
+    } catch (err) {
+        console.error('Error in loadUserData:', err);
+        window.isUserLoaded = false;
     }
-    updateUI(); // Ensure UI updates after loading
 }
 
 function showSaveConfirmation() {
@@ -1038,6 +885,7 @@ function showTab(tabId) {
 }
 
 // Load user data immediately
+console.log('Calling loadUserData');
 loadUserData();
 
 // Auto-export on page close or refresh
@@ -1078,20 +926,34 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// Initialize UI after user is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM ready');
-    if (window.user) {
-        document.getElementById('signupSection').classList.add('hidden');
-        document.getElementById('appSection').classList.remove('hidden');
-        window.simulateOfflineGrowth();
-        window.startGrowthLoop();
-        if (window.virtualBaeActive) window.toggleVirtualBae();
-        if (window.paranoidMode) window.toggleParanoidMode();
-        updateUI();
-    } else {
-        document.getElementById('signupSection').classList.remove('hidden');
-        document.getElementById('appSection').classList.add('hidden');
-    }
+    console.log('script.js DOM ready');
+    // Wait for user to be loaded before proceeding
+    const waitForUser = setInterval(() => {
+        if (window.isUserLoaded) {
+            clearInterval(waitForUser);
+            console.log('User loaded, initializing UI');
+            try {
+                if (window.user) {
+                    document.getElementById('signupSection').classList.add('hidden');
+                    document.getElementById('appSection').classList.remove('hidden');
+                    if (window.virtualBaeActive) window.toggleVirtualBae();
+                    if (window.paranoidMode) window.toggleParanoidMode();
+                    updateUI();
+                    // Notify game.js that user is ready
+                    window.dispatchEvent(new Event('userLoaded'));
+                } else {
+                    document.getElementById('signupSection').classList.remove('hidden');
+                    document.getElementById('appSection').classList.add('hidden');
+                }
+            } catch (err) {
+                console.error('Error during UI initialization:', err);
+            }
+        } else {
+            console.log('Waiting for user to load...');
+        }
+    }, 100); // Check every 100ms
 });
 
 console.log('script.js loaded');
