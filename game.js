@@ -846,7 +846,7 @@ window.startGrowthLoop = function() {
     if (window.growthLoopId) clearInterval(window.growthLoopId);
     window.growthLoopId = null;
 
-    // Follower growth every 3 seconds
+    // Follower growth every 6 seconds
     setInterval(() => {
         if (!window.user) return;
         const followerCount = window.user.followers || 0; // Ensure followerCount is defined
@@ -899,7 +899,7 @@ window.startGrowthLoop = function() {
     }, 5000); // 5 seconds for like growth
 });
 
-    // Like growth every 4 seconds
+    // Like growth every 5 seconds
     setInterval(() => {
         if (!window.user || !Array.isArray(window.user.posts)) return;
         const followerCount = window.user.followers || 0;
@@ -928,7 +928,7 @@ window.startGrowthLoop = function() {
         console.log('Likes increased on up to 3 posts');
         if (autoSaveEnabled) window.saveUserData();
         window.updateUI();
-    }, 4000); // 4 seconds for like growth
+    }, 5000); // 5 seconds for like growth
 };
 
 window.simulateOfflineGrowth = function() {
