@@ -105,19 +105,19 @@ function saveUserData(showConfirmation = false) {
                     username: account.username,
                     followers: account.followers,
                     money: account.money,
-                    posts: account.posts.slice(0, 20), // Limit to 20 posts to reduce size
+                    posts: account.posts.slice(0, 20), // Limit to 20 posts
                     verified: account.verified,
                     famous: account.famous,
                     profilePic: account.profilePic,
                     theme: account.theme,
-                    notifications: account.notifications ? account.notifications.slice(0, 10) : [], // Limit to 10 notifications
+                    notifications: account.notifications ? account.notifications.slice(0, 10) : [],
                     sponsored: account.sponsored || false,
                     eventHosted: account.eventHosted || false,
                     lastActive: account.lastActive || Date.now(),
-                    trashBin: account.trashBin ? account.trashBin.slice(0, 10) : [] // Limit to 10 trashed posts
+                    trashBin: account.trashBin ? account.trashBin.slice(0, 10) : []
                 })),
-                generatedAccounts: Object.fromEntries(Object.entries(generatedAccounts).slice(0, 5)), // Limit to 5 generated accounts
-                messages: messages.slice(0, 10), // Limit to 10 messages
+                generatedAccounts: Object.fromEntries(Object.entries(generatedAccounts).slice(0, 5)),
+                messages: messages.slice(0, 10),
                 hasEngagementBoost,
                 hasProfileGlitter,
                 shoutoutStreak: window.shoutoutStreak,
@@ -127,35 +127,157 @@ function saveUserData(showConfirmation = false) {
             };
             const dataToSave = JSON.stringify(minimalData);
             latestAutoSave = dataToSave;
-            console.log('latestAutoSave set, length:', dataToSave.length);
+            console.log('Saved data, length:', dataToSave.length);
             if (isSessionStorageAvailable()) {
-                try {
-                    sessionStorage.setItem('simstaLatestAutoSave', dataToSave);
-                    console.log('Saved to sessionStorage');
-                } catch (e) {
-                    console.warn('sessionStorage save failed:', e);
-                }
+                sessionStorage.setItem('simstaLatestAutoSave', dataToSave);
             }
             if (!isLocalStorageFull) {
-                try {
-                    localStorage.setItem('simstaAccounts', dataToSave);
-                    localStorage.setItem('simstaBackup', dataToSave);
-                    console.log('Saved to localStorage');
-                } catch (e) {
-                    console.warn('localStorage save failed (possibly full):', e);
-                    isLocalStorageFull = true;
-                    if (!window.storageFullNotified) {
-                        window.addNotification('Storage full! Using auto-exported files instead. 📤', false);
-                        window.storageFullNotified = true;
-                    }
-                    window.exportUserData(true); // Auto-export to file on quota exceeded
-                }
+                localStorage.setItem('simstaAccounts', dataToSave);
+                localStorage.setItem('simstaBackup', dataToSave);
             }
             if (showConfirmation) showSaveConfirmation();
         } catch (e) {
             console.error('Save error:', e);
         }
     }, 2000);
+}
+
+function loadUserData() {
+    console.log('loadUserData called');
+    if (!isLocalStorageAvailable()) {
+        console.error('localStorage is not available');
+        alert('Your browser does not support localStorage.');
+        return;
+    }
+
+    let savedData = localStorage.getItem('simstaAccounts');
+    if (!savedData) {
+        savedData = localStorage.getItem('simstaBackup');
+        if (savedData) {
+            window.addNotification('Loaded backup save! 💾', false);
+        }
+    }
+
+    if (savedData) {
+        try {
+            const parsedData = JSON.parse(savedData);
+            window.accounts = parsedData.accounts || [];
+            window.generatedAccounts = parsedData.generatedAccounts || {};
+            window.messages = parsedData.messages || [];
+            hasEngagementBoost = parsedData.hasEngagementBoost || false;
+            hasProfileGlitter = parsedData.hasProfileGlitter || false;
+            window.shoutoutStreak = parsedData.shoutoutStreak || 0;
+            window.lastShoutoutTime = parsedData.lastShoutoutTime || 0;
+            window.lastDailyReward = parsedData.lastDailyReward || 0;
+            window.currentAccountIndex = parsedData.currentAccountIndex || 0;
+            window.user = window.accounts[window.currentAccountIndex] || null;
+
+            if (window.user) {
+                window.user = {
+                    username: window.user.username || 'DefaultUser',
+                    followers: Number(window.user.followers) || 0,
+                    posts: Array.isArray(window.user.posts) ? window.user.posts : [],
+                    money: Number(window.user.money) || 0,
+                    notifications: Array.isArray(window.user.notifications) ? window.user.notifications : [],
+                    verified: window.user.verified || false,
+                    famous: window.user.famous || false,
+                    lastActive: window.user.lastActive || Date.now(),
+                    sponsored: window.user.sponsored || false,
+                    eventHosted: window.user.eventHosted || false,
+                    profilePic: window.user.profilePic || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
+                    trashBin: window.user.trashBin || []
+                };
+                window.user.posts = window.user.posts.map(post => ({
+                    likes: Number(post.likes) || 0,
+                    comments: Array.isArray(post.comments) ? post.comments : [],
+                    isViral: post.isViral || false,
+                    isSuperViral: post.isSuperViral || false,
+                    liked: post.liked || false,
+                    caption: post.caption || '',
+                    hashtags: Array.isArray(post.hashtags) ? post.hashtags : [],
+                    imageData: post.imageData || ''
+                }));
+                console.log('User loaded successfully from localStorage:', window.user);
+            } else {
+                console.log('No valid user in saved data');
+                window.accounts = [];
+                window.user = null;
+                window.currentAccountIndex = 0;
+            }
+        } catch (e) {
+            console.error('Parse error in saved data:', e);
+            alert('Failed to load saved data. Resetting.');
+            window.accounts = [];
+            window.user = null;
+            window.currentAccountIndex = 0;
+            localStorage.removeItem('simstaAccounts');
+            localStorage.removeItem('simstaBackup');
+        }
+    } else {
+        console.log('No saved data found');
+        window.accounts = [];
+        window.user = null;
+        window.currentAccountIndex = 0;
+    }
+
+    if (window.accounts.length === 0) {
+        const defaultProfilePic = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC';
+        const sophhiaaAccount = {
+            username: 'sophhiaa',
+            followers: 0,
+            posts: [],
+            money: 0,
+            notifications: [],
+            verified: false,
+            famous: false,
+            lastActive: Date.now(),
+            sponsored: false,
+            eventHosted: false,
+            profilePic: defaultProfilePic,
+            trashBin: []
+        };
+        const viviVelvetAccount = {
+            username: 'ViviVelvet',
+            followers: 0,
+            posts: [],
+            money: 0,
+            notifications: [],
+            verified: false,
+            famous: false,
+            lastActive: Date.now(),
+            sponsored: false,
+            eventHosted: false,
+            profilePic: defaultProfilePic,
+            trashBin: []
+        };
+        window.accounts.push(sophhiaaAccount, viviVelvetAccount);
+        window.currentAccountIndex = 0;
+        window.user = window.accounts[0];
+        window.addNotification('Created your fab accounts, sophhiaa and ViviVelvet! ❤️', false);
+    }
+
+    if (!window.user) {
+        window.user = window.accounts[0] || {
+            username: 'DefaultUser',
+            followers: 0,
+            posts: [],
+            money: 0,
+            notifications: [],
+            verified: false,
+            famous: false,
+            lastActive: Date.now(),
+            sponsored: false,
+            eventHosted: false,
+            profilePic: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
+            trashBin: []
+        };
+        if (!window.accounts.includes(window.user)) {
+            window.accounts.push(window.user);
+        }
+    }
+    console.log('User after load:', window.user);
+    updateUI();
+};
 }
 
 function loadUserData() {
