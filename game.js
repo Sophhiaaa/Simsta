@@ -842,13 +842,31 @@ window.addComment = function(index, commentText) {
 
 // Growth and Engagement
 window.startGrowthLoop = function() {
-    if (window.growthLoopId) clearInterval(window.growthLoopId);
+    if (window.growthLoopId) clearInterval(window.growthLoopId); // Clear existing loop
+    window.growthLoopId = null;
+
+    // Follower gain every 3 seconds
     window.growthLoopId = setInterval(() => {
-        window.simulateEngagement();
-        window.simulateGeneratedAccounts();
-        window.simulateMessages();
-        console.log('Growth loop triggered - followers:', window.user.followers);
-    }, 15000); // Reduced to 15 seconds for faster testing
+        if (window.user) {
+            window.user.followers = Math.floor(window.user.followers + Math.random() * 5 + 1); // 1-5 followers
+            console.log('Followers increased to:', window.user.followers);
+            saveUserData();
+            updateUI();
+        }
+    }, 3000);
+
+    // Like gain every 4 seconds
+    setInterval(() => {
+        if (window.user && window.user.posts && window.user.posts.length > 0) {
+            const randomPost = window.user.posts[Math.floor(Math.random() * window.user.posts.length)];
+            if (randomPost) {
+                randomPost.likes = Math.floor(randomPost.likes + Math.random() * 10 + 1); // 1-10 likes
+                console.log('Likes increased on post:', randomPost.likes);
+                saveUserData();
+                updateUI();
+            }
+        }
+    }, 4000);
 };
 
 window.simulateEngagement = function(index) {
