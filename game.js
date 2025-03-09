@@ -811,7 +811,6 @@ window.simulateEngagement = function(index) {
     }
     window.user.followers += Math.floor(likes * 0.02);
     window.checkStatus();
-};
 
 window.simulateGeneratedPost = function(username) {
     if (!window.generatedAccounts) {
