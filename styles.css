@@ -567,17 +567,36 @@ img {
     box-shadow: 0 0 15px rgba(255, 105, 180, 0.7);
 }
 
-/* Notification Toast (Restored to original size) */
+/* Notification Toast (Fixed and Enhanced) */
 .notification-toast {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background: #ff99cc;
+    background: linear-gradient(45deg, #ff99cc, #ffb6c1); /* Smudge Gradient Pink Cyan */
     color: white;
     padding: 10px 20px;
     border-radius: 5px;
     z-index: 1000;
     animation: fadeInOut 3s ease-in-out forwards;
+    width: auto; /* Let content determine width */
+    max-width: 300px; /* Cap width for larger screens */
+    box-shadow: 0 0 10px rgba(255, 105, 180, 0.5); /* Add shadow for depth */
+    font-family: 'Comic Sans MS', cursive, sans-serif; /* Match body font */
+    font-size: 14px; /* Original font size */
+}
+
+/* Stack notifications vertically by dynamically adjusting the bottom position */
+.notification-toast:nth-last-child(1) {
+    bottom: 20px; /* First notification */
+}
+.notification-toast:nth-last-child(2) {
+    bottom: 70px; /* Second notification (20px + ~40px height + 10px margin) */
+}
+.notification-toast:nth-last-child(3) {
+    bottom: 120px; /* Third notification */
+}
+.notification-toast:nth-last-child(n+4) {
+    display: none; /* Hide additional notifications if too many */
 }
 
 @keyframes fadeIn {
@@ -615,7 +634,7 @@ nav button:hover {
     box-shadow: 0 0 10px rgba(255, 105, 180, 0.7);
 }
 
-/* Responsive Design (Adjusted to avoid affecting notifications) */
+/* Responsive Design */
 @media (max-width: 600px) {
     .save-options, .social-buttons, .fame-buttons, .tabs {
         flex-direction: column;
@@ -668,7 +687,21 @@ nav button:hover {
         font-size: 12px;
         padding: 6px;
     }
-    /* Notification remains unchanged in mobile view */
+    .notification-toast {
+        right: 10px; /* Adjust for smaller screens */
+        max-width: 250px; /* Slightly smaller cap */
+        font-size: 12px; /* Slightly smaller text for mobile */
+    }
+    /* Adjust notification stacking for mobile */
+    .notification-toast:nth-last-child(1) {
+        bottom: 15px;
+    }
+    .notification-toast:nth-last-child(2) {
+        bottom: 60px; /* Adjusted for smaller height */
+    }
+    .notification-toast:nth-last-child(3) {
+        bottom: 105px;
+    }
 }
 
 /* Modal Styles */
