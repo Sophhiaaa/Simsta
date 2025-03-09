@@ -239,18 +239,31 @@ function loadUserData() {
         window.generatePost(true); // Silent post (no "Generated a fab post!" notification)
         window.addNotification('Posted a fab update for you on refresh, princess! 🌟', false);
     } else if (tempMessage) {
-        // If no user data and auto-post is about to occur, show the message for 5 seconds
+        // If no user data and auto-post is about to occur, show the message for 3 seconds
+        console.log('Setting timeout to remove temp message in 3000ms');
         setTimeout(() => {
-            if (tempMessage && tempMessage.parentNode) {
-                tempMessage.style.opacity = '0';
-                setTimeout(() => {
-                    if (tempMessage && tempMessage.parentNode) {
-                        tempMessage.remove();
-                        console.log('Temporary load message removed');
-                    }
-                }, 500); // Allow fade-out transition
+            try {
+                if (tempMessage && tempMessage.parentNode) {
+                    tempMessage.style.opacity = '0';
+                    setTimeout(() => {
+                        try {
+                            if (tempMessage && tempMessage.parentNode) {
+                                tempMessage.remove();
+                                console.log('Temporary load message removed successfully');
+                            } else {
+                                console.log('Temporary load message not removed - element or parent missing');
+                            }
+                        } catch (e) {
+                            console.error('Error removing temp message:', e);
+                        }
+                    }, 500); // Fade-out transition
+                } else {
+                    console.log('Temporary load message not found for removal');
+                }
+            } catch (e) {
+                console.error('Error fading out temp message:', e);
             }
-        }, 5000); // Display for 5 seconds
+        }, 3000); // Reduced to 3 seconds for testing
     }
 
     console.log('loadUserData completed - final user state:', JSON.stringify(window.user, null, 2));
