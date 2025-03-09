@@ -34,7 +34,10 @@ window.formatNumber = function(num) {
 
 // Ensure addNotification matches script.js format and triggers save
 window.addNotification = function(message, skipSave = true) {
-    if (!window.user) return;
+    if (!window.user) {
+        console.error('No user in addNotification');
+        return;
+    }
     window.user.notifications.unshift({
         id: Date.now(),
         message: message,
@@ -99,7 +102,7 @@ window.claimDailyReward = function() {
     }
     window.lastDailyReward = now;
     window.addNotification(rewardMessage);
-    console.log('After daily reward - followers:', window.user.followers, 'money:', window.user.money);
+    console.log('After claimDailyReward - followers:', window.user.followers, 'money:', window.user.money);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
 };
@@ -118,7 +121,7 @@ window.buyTheme = function(theme) {
     document.body.classList.remove('candy-theme', 'galaxy-theme');
     document.body.classList.add(`${theme}-theme`);
     window.addNotification(`Bought the ${theme} theme! Looking fab! 💖`);
-    console.log('After buying theme - money:', window.user.money, 'theme:', window.user.theme);
+    console.log('After buyTheme - money:', window.user.money, 'theme:', window.user.theme);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
 };
@@ -128,7 +131,7 @@ window.refreshFollowers = function() {
     window.simulateOfflineGrowth();
     window.calculateMoneyFromLikes();
     window.addNotification('Refreshed your followers, babe! ✨');
-    console.log('After refresh - followers:', window.user.followers, 'money:', window.user.money);
+    console.log('After refreshFollowers - followers:', window.user.followers, 'money:', window.user.money);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
 };
@@ -139,7 +142,7 @@ window.shareProfile = function() {
         Math.floor(Math.random() * 20) + 5;
     window.user.followers += followerGain;
     window.addNotification(`Shared your profile! Gained ${window.formatNumber(followerGain)} followers! 📲`);
-    console.log('After sharing profile - followers:', window.user.followers);
+    console.log('After shareProfile - followers:', window.user.followers);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
 };
@@ -151,7 +154,7 @@ window.liveStream = function() {
     const followerGain = Math.floor(viewers * 0.05);
     window.user.followers += followerGain;
     window.addNotification(`Went live with ${window.formatNumber(viewers)} viewers! Gained ${window.formatNumber(followerGain)} followers! 🎥`);
-    console.log('After live stream - followers:', window.user.followers);
+    console.log('After liveStream - followers:', window.user.followers);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
 };
@@ -167,7 +170,7 @@ window.getSponsored = function() {
     } else {
         window.addNotification('Need 5K followers for a sponsor deal! 🌟');
     }
-    console.log('After sponsor - money:', window.user.money, 'sponsored:', window.user.sponsored);
+    console.log('After getSponsored - money:', window.user.money, 'sponsored:', window.user.sponsored);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
 };
@@ -183,7 +186,7 @@ window.hostEvent = function() {
     } else {
         window.addNotification('Reach 10K followers to host an event! 💖');
     }
-    console.log('After hosting event - followers:', window.user.followers, 'eventHosted:', window.user.eventHosted);
+    console.log('After hostEvent - followers:', window.user.followers, 'eventHosted:', window.user.eventHosted);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
 };
@@ -219,7 +222,7 @@ window.giveShoutout = function() {
         shoutoutButton.classList.add('highlight');
         setTimeout(() => shoutoutButton.classList.remove('highlight'), 500);
     }
-    console.log('After shoutout - followers:', window.user.followers, 'loyalty:', window.user.loyalty);
+    console.log('After giveShoutout - followers:', window.user.followers, 'loyalty:', window.user.loyalty);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
 };
@@ -229,8 +232,9 @@ window.toggleParanoidMode = function() {
     document.body.classList.toggle('paranoid-mode', window.paranoidMode);
     window.addNotification(window.paranoidMode ? 'Paranoid mode on! 👻' : 'Back to glam! 💖');
     if (window.paranoidMode) {
-        window.user.followers += Math.floor(Math.random() * 50);
-        window.addNotification('Spooky followers joined! 🌙');
+        const followerGain = Math.floor(Math.random() * 50);
+        window.user.followers += followerGain;
+        window.addNotification(`Spooky followers joined! +${followerGain} 🌙`);
     }
     console.log('After toggleParanoidMode - followers:', window.user.followers, 'paranoidMode:', window.paranoidMode);
     if (autoSaveEnabled) window.saveUserData();
@@ -269,10 +273,11 @@ window.generatePost = function(silent = false) {
         imageData: images[Math.floor(Math.random() * images.length)],
         timestamp: Date.now()
     };
+    if (!Array.isArray(window.user.posts)) window.user.posts = [];
     window.user.posts.unshift(post);
-    window.simulateEngagement(0);
+    window.simulateEngagement(0); // Trigger engagement immediately after posting
     if (!silent) window.addNotification('Generated a fab post! 🌟');
-    console.log('After generatePost - posts:', window.user.posts.length, 'followers:', window.user.followers);
+    console.log('After generatePost - posts:', window.user.posts.length, 'followers:', window.user.followers, 'new post likes:', post.likes);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
     if (window.debugLikes) console.log('Post created with likes:', window.user.posts[0].likes);
@@ -319,9 +324,10 @@ window.createManualPost = function() {
         const reader = new FileReader();
         reader.onload = (e) => {
             post.imageData = e.target.result;
+            if (!Array.isArray(window.user.posts)) window.user.posts = [];
             window.user.posts.unshift(post);
-            window.simulateEngagement(0);
-            console.log('After createManualPost with image - posts:', window.user.posts.length, 'followers:', window.user.followers);
+            window.simulateEngagement(0); // Trigger engagement immediately
+            console.log('After createManualPost with image - posts:', window.user.posts.length, 'followers:', window.user.followers, 'new post likes:', post.likes);
             if (autoSaveEnabled) window.saveUserData();
             imageInput.value = '';
             captionInput.value = '';
@@ -330,9 +336,10 @@ window.createManualPost = function() {
         };
         reader.readAsDataURL(file);
     } else {
+        if (!Array.isArray(window.user.posts)) window.user.posts = [];
         window.user.posts.unshift(post);
-        window.simulateEngagement(0);
-        console.log('After createManualPost without image - posts:', window.user.posts.length, 'followers:', window.user.followers);
+        window.simulateEngagement(0); // Trigger engagement immediately
+        console.log('After createManualPost without image - posts:', window.user.posts.length, 'followers:', window.user.followers, 'new post likes:', post.likes);
         if (autoSaveEnabled) window.saveUserData();
         captionInput.value = '';
         window.toggleManualPost();
@@ -357,8 +364,9 @@ window.buyFollowerBoost = function() {
         return;
     }
     window.user.money -= 200;
-    window.user.followers += 500;
-    window.addNotification('Bought a Follower Boost! +500 followers! 🌟');
+    const followerGain = 500;
+    window.user.followers += followerGain;
+    window.addNotification(`Bought a Follower Boost! +${followerGain} followers! 🌟`);
     console.log('After buyFollowerBoost - followers:', window.user.followers, 'money:', window.user.money);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
@@ -393,7 +401,7 @@ window.buyProfileGlitter = function() {
     window.user.money -= 50;
     hasProfileGlitter = true;
     window.addNotification('Bought Profile Glitter! Your username sparkles! ✨');
-    console.log('After buyProfileGlitter - money:', window.user.money, 'hasProfileGlitter:', hasProfileGlitter);
+    console.log('After buyProfileGlitter - money:', window.user.money, 'hasProfileGlitter:', hasEngagementBoost);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
 };
@@ -457,7 +465,7 @@ window.renderPosts = function() {
     if (!Array.isArray(window.user.posts)) window.user.posts = [];
     feed.innerHTML = '';
     const postsToShow = window.user.posts.slice(0, 10);
-    console.log('Rendering posts:', postsToShow.length);
+    console.log('Rendering posts:', postsToShow.length, 'total posts:', window.user.posts.length);
     postsToShow.forEach((post, index) => window.renderPost(post, index, feed));
 
     if (window.user.posts.length > 10) {
@@ -474,7 +482,7 @@ window.renderPosts = function() {
 };
 
 window.renderPost = function(post, index, feed) {
-    console.log('Rendering post at index:', index);
+    console.log('Rendering post at index:', index, 'likes:', post.likes);
     const postDiv = document.createElement('div');
     postDiv.className = 'post';
     if (post.isViral) postDiv.classList.add('viral');
@@ -575,7 +583,7 @@ window.renderPost = function(post, index, feed) {
     commentCenter.appendChild(commentInput);
     postDiv.appendChild(commentCenter);
     feed.appendChild(postDiv);
-    console.log('Post rendered at index:', index);
+    console.log('Post rendered at index:', index, 'likes:', post.likes);
 };
 
 window.renderNotifications = function() {
@@ -726,21 +734,28 @@ window.renderGeneratedPost = function(post, index, username) {
 
 // Post Interaction Functions
 window.refreshPost = function(index) {
+    if (!window.user || !Array.isArray(window.user.posts) || !window.user.posts[index]) {
+        console.error('Invalid post or user in refreshPost, index:', index);
+        window.addNotification('Oops, can’t refresh that post, babe! 💔');
+        return;
+    }
     const post = window.user.posts[index];
     const currentLikes = post.likes;
     const currentComments = post.comments ? [...post.comments] : [];
     const viralChance = Math.random();
     if (viralChance > 0.9 && !post.isViral) {
         post.isViral = true;
-        post.likes += Math.floor(window.user.followers * 0.1);
-        window.addNotification('Your post went viral! 🌟');
+        const likeGain = Math.floor(window.user.followers * 0.1);
+        post.likes += likeGain;
+        window.addNotification('Your post went viral! +${window.formatNumber(likeGain)} likes 🌟');
     } else if (viralChance > 0.95 && post.isViral && !post.isSuperViral) {
         post.isSuperViral = true;
-        post.likes += Math.floor(window.user.followers * 0.2);
-        window.addNotification('Super viral moment! 🚀');
+        const likeGain = Math.floor(window.user.followers * 0.2);
+        post.likes += likeGain;
+        window.addNotification('Super viral moment! +${window.formatNumber(likeGain)} likes 🚀');
     } else {
-        const newLikes = Math.floor(Math.random() * window.user.followers * 0.01) + 10;
-        post.likes += newLikes;
+        const likeGain = Math.floor(Math.random() * window.user.followers * 0.01) + 10;
+        post.likes += likeGain;
         const newCommentsCount = Math.floor(Math.random() * 5);
         for (let i = 0; i < newCommentsCount; i++) {
             post.comments.push({
@@ -748,14 +763,14 @@ window.refreshPost = function(index) {
                 comment: window.pickRandomComment()
             });
         }
-        if (newLikes > 0 || newCommentsCount > 0) {
-            window.addNotification(`Post got ${window.formatNumber(newLikes)} new likes and ${newCommentsCount} new comments! 💖`);
+        if (likeGain > 0 || newCommentsCount > 0) {
+            window.addNotification(`Post got ${window.formatNumber(likeGain)} new likes and ${newCommentsCount} new comments! 💖`);
         }
     }
     if (post.likes !== currentLikes) document.getElementById(`likes-${index}`).textContent = `${window.formatNumber(post.likes)} likes`;
     if (post.comments.length !== currentComments.length) {
         document.getElementById(`comments-count-${index}`).textContent = `${window.formatNumber(post.comments.length)} comments`;
-        const commentList = document.getElementById(`comments-${index}`);
+        const commentList = document.querySelector(`#feed .post:nth-child(${index + 1}) .comment-list`);
         if (commentList) {
             commentList.innerHTML = '';
             post.comments.forEach(comment => {
@@ -765,12 +780,17 @@ window.refreshPost = function(index) {
             });
         }
     }
-    console.log('After refreshPost - post likes:', post.likes, 'comments:', post.comments.length);
+    console.log('After refreshPost - post likes:', post.likes, 'comments:', post.comments.length, 'followers:', window.user.followers);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
 };
 
 window.toggleLike = function(index) {
+    if (!window.user || !Array.isArray(window.user.posts) || !window.user.posts[index]) {
+        console.error('Invalid post or user in toggleLike, index:', index);
+        window.addNotification('Oops, can’t like that post, babe! 💔');
+        return;
+    }
     const post = window.user.posts[index];
     if (post.liked) {
         post.likes--;
@@ -782,12 +802,17 @@ window.toggleLike = function(index) {
     document.getElementById(`likes-${index}`).textContent = `${window.formatNumber(post.likes)} likes`;
     const likeButton = document.querySelector(`#feed .post:nth-child(${index + 1}) .like-button`);
     if (likeButton) likeButton.classList.toggle('liked', post.liked);
-    console.log('After toggleLike - post likes:', post.likes, 'liked:', post.liked);
+    console.log('After toggleLike - post likes:', post.likes, 'liked:', post.liked, 'followers:', window.user.followers);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
 };
 
 window.addComment = function(index, commentText) {
+    if (!window.user || !Array.isArray(window.user.posts) || !window.user.posts[index]) {
+        console.error('Invalid post or user in addComment, index:', index);
+        window.addNotification('Oops, can’t comment on that post, babe! 💔');
+        return;
+    }
     if (!commentText.trim()) return;
     const post = window.user.posts[index];
     post.comments.push({
@@ -802,7 +827,7 @@ window.addComment = function(index, commentText) {
     }
     document.getElementById(`comments-count-${index}`).textContent = `${window.formatNumber(post.comments.length)} comments`;
     window.addNotification('Comment added, girly! 💬');
-    console.log('After addComment - comments:', post.comments.length);
+    console.log('After addComment - comments:', post.comments.length, 'followers:', window.user.followers);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
 };
@@ -814,17 +839,25 @@ window.startGrowthLoop = function() {
         window.simulateEngagement();
         window.simulateGeneratedAccounts();
         window.simulateMessages();
-    }, 30000);
+        console.log('Growth loop triggered - followers:', window.user.followers);
+    }, 30000); // 30 seconds for testing, adjust as needed
 };
 
 window.simulateEngagement = function(index) {
+    if (!window.user || !Array.isArray(window.user.posts)) {
+        console.error('No user or posts in simulateEngagement');
+        return;
+    }
     if (typeof index === 'number') {
         const post = window.user.posts[index];
-        if (!post) return;
-        let likes = Math.floor(Math.random() * window.user.followers * (hasEngagementBoost ? 0.075 : 0.05)) + 10;
+        if (!post) {
+            console.error('Invalid post index in simulateEngagement:', index);
+            return;
+        }
+        let likeGain = Math.floor(Math.random() * window.user.followers * (hasEngagementBoost ? 0.075 : 0.05)) + 10;
         const commentsCount = Math.floor(Math.random() * 5);
-        if (window.user.followers >= 100000) likes += Math.floor(Math.random() * 1000);
-        post.likes += likes;
+        if (window.user.followers >= 100000) likeGain += Math.floor(Math.random() * 1000);
+        post.likes += likeGain;
         for (let i = 0; i < commentsCount; i++) {
             post.comments.push({
                 username: window.generateRandomUsername(),
@@ -832,18 +865,16 @@ window.simulateEngagement = function(index) {
             });
         }
         hasEngagementBoost = false;
-        if (likes > 0 || commentsCount > 0) {
-            window.addNotification(`Post got ${window.formatNumber(likes)} likes and ${commentsCount} comments! 💖`, true);
+        if (likeGain > 0 || commentsCount > 0) {
+            window.addNotification(`Post got ${window.formatNumber(likeGain)} new likes and ${commentsCount} new comments! 💖`, true);
         }
-        console.log('After simulateEngagement (single post) - post likes:', post.likes, 'comments:', post.comments.length);
-        if (autoSaveEnabled) window.saveUserData();
-        window.updateUI();
+        console.log('After simulateEngagement (single post) - post likes:', post.likes, 'comments:', post.comments.length, 'followers:', window.user.followers);
     } else {
         window.user.posts.slice(0, 5).forEach(post => {
-            let likes = Math.floor(Math.random() * window.user.followers * 0.01) + 5;
+            let likeGain = Math.floor(Math.random() * window.user.followers * 0.01) + 5;
             const commentsCount = Math.floor(Math.random() * 3);
-            if (window.user.followers >= 100000) likes += Math.floor(Math.random() * 500);
-            post.likes += likes;
+            if (window.user.followers >= 100000) likeGain += Math.floor(Math.random() * 500);
+            post.likes += likeGain;
             for (let i = 0; i < commentsCount; i++) {
                 post.comments.push({
                     username: window.generateRandomUsername(),
@@ -851,13 +882,14 @@ window.simulateEngagement = function(index) {
                 });
             }
         });
-        console.log('After simulateEngagement (all posts) - total posts:', window.user.posts.length);
-        if (autoSaveEnabled) window.saveUserData();
-        window.updateUI();
+        console.log('After simulateEngagement (all posts) - total posts:', window.user.posts.length, 'followers:', window.user.followers);
     }
+    if (autoSaveEnabled) window.saveUserData();
+    window.updateUI();
 };
 
 window.simulateGeneratedAccounts = function() {
+    if (!window.generatedAccounts) window.generatedAccounts = {};
     const username = window.generateRandomUsername();
     if (!window.generatedAccounts[username]) {
         window.generatedAccounts[username] = {
@@ -888,9 +920,9 @@ window.simulateGeneratedAccounts = function() {
         });
         window.addNotification(`${username} posted something fab! Check it out! 🌟`, true);
         console.log('After simulateGeneratedAccounts - generated posts for', username, ':', account.posts.length);
-        if (autoSaveEnabled) window.saveUserData();
-        window.updateUI();
     }
+    if (autoSaveEnabled) window.saveUserData();
+    window.updateUI();
 };
 
 window.simulateMessages = function() {
@@ -904,9 +936,9 @@ window.simulateMessages = function() {
         });
         window.addNotification(`New message from ${sender}! 📩`, true);
         console.log('After simulateMessages - messages:', window.messages.length);
-        if (autoSaveEnabled) window.saveUserData();
-        window.updateUI();
     }
+    if (autoSaveEnabled) window.saveUserData();
+    window.updateUI();
 };
 
 window.simulateInitialFollowers = function() {
@@ -919,18 +951,21 @@ window.simulateInitialFollowers = function() {
 };
 
 window.simulateOfflineGrowth = function() {
-    if (!window.user.lastActive) return;
+    if (!window.user || !window.user.lastActive) {
+        console.warn('No user or lastActive in simulateOfflineGrowth');
+        return;
+    }
     const now = Date.now();
     const timeAway = (now - window.user.lastActive) / 1000;
     const hoursAway = timeAway / 3600;
-    const followerGrowth = Math.floor(hoursAway * (window.user.followers * 0.01 + 5));
-    if (followerGrowth > 0) {
-        window.user.followers += followerGrowth;
-        window.addNotification(`While you were away, you gained ${window.formatNumber(followerGrowth)} followers! 🌟`);
+    const followerGain = Math.floor(hoursAway * (window.user.followers * 0.01 + 5));
+    if (followerGain > 0) {
+        window.user.followers += followerGain;
+        window.addNotification(`While you were away, you gained ${window.formatNumber(followerGain)} followers! 🌟`);
         console.log('After simulateOfflineGrowth - followers:', window.user.followers);
-        if (autoSaveEnabled) window.saveUserData();
-        window.updateUI();
     }
+    if (autoSaveEnabled) window.saveUserData();
+    window.updateUI();
 };
 
 window.showShoutoutModal = function(postIndex) {
