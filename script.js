@@ -19,7 +19,7 @@ window.accounts = [];
 window.currentAccountId = null; // Changed to currentAccountId to match game.js
 window.user = null;
 let currentDeleteUI = null; // Track the active custom delete UI
-let windowstorageFullNotified = false; // Added to track storage full notification
+let window.storageFullNotified = false; // Added to track storage full notification
 
 function isLocalStorageAvailable() {
     try {
@@ -54,7 +54,6 @@ function saveUserData(showConfirmation = false) {
         console.error('localStorage is not available');
         return;
     }
-    // Update the account in the accounts array
     window.accounts = window.accounts.map(account => {
         if (account.id === window.currentAccountId) return window.user;
         return account;
@@ -248,7 +247,7 @@ function loadUserData() {
             }
         } catch (e) {
             console.error('Parse error in saved data:', e);
-            alert('Failed to load saved data. Starting fresh.');
+            alert('Failed to load saved data. Resetting.');
             window.accounts = [];
             window.user = null;
             window.currentAccountId = null;
@@ -262,12 +261,13 @@ function loadUserData() {
         window.currentAccountId = null;
     }
 
-    // Only create a default account for new players, not your preset accounts
+    // Create "sophhiaa" and "ViviVelvet" accounts if none exist
     if (window.accounts.length === 0) {
         const defaultProfilePic = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC';
-        const newUser = {
-            id: 'newplayer_' + Date.now(),
-            username: 'NewPlayer',
+        
+        const sophhiaaAccount = {
+            id: 'sophhiaa_' + Date.now(),
+            username: 'sophhiaa',
             followers: 0,
             posts: [],
             money: 0,
@@ -280,13 +280,49 @@ function loadUserData() {
             profilePic: defaultProfilePic,
             trashBin: []
         };
-        window.accounts.push(newUser);
-        window.currentAccountId = newUser.id;
-        window.user = newUser;
-        window.addNotification('Welcome, new player! Create your own account to get started! 💖', false);
-    } else if (!window.user) {
-        window.currentAccountId = window.accounts[0].id;
-        window.user = window.accounts[0];
+
+        const viviVelvetAccount = {
+            id: 'ViviVelvet_' + Date.now(),
+            username: 'ViviVelvet',
+            followers: 0,
+            posts: [],
+            money: 0,
+            notifications: [],
+            verified: false,
+            famous: false,
+            lastActive: Date.now(),
+            sponsored: false,
+            eventHosted: false,
+            profilePic: defaultProfilePic,
+            trashBin: []
+        };
+
+        window.accounts.push(sophhiaaAccount, viviVelvetAccount);
+        window.currentAccountId = sophhiaaAccount.id; // Default to "sophhiaa" as the active account
+        window.user = sophhiaaAccount;
+        window.addNotification('Created your fab accounts, sophhiaa and ViviVelvet! 💖', false);
+    }
+
+    // Initialize user if still null after loading
+    if (!window.user) {
+        window.user = window.accounts[0] || {
+            id: 'default_' + Date.now(),
+            username: 'DefaultUser',
+            followers: 0,
+            posts: [],
+            money: 0,
+            notifications: [],
+            verified: false,
+            famous: false,
+            lastActive: Date.now(),
+            sponsored: false,
+            eventHosted: false,
+            profilePic: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
+            trashBin: []
+        };
+        if (!window.accounts.find(account => account.id === window.user.id)) {
+            window.accounts.push(window.user);
+        }
     }
     updateUI(); // Ensure UI updates after loading
 }
@@ -608,6 +644,35 @@ window.previewProfilePic = function(event) {
     }
 };
 
+function finishAccountCreation(newUser) {
+    window.accounts.push(newUser);
+    window.currentAccountId = newUser.id;
+    window.user = newUser;
+    localStorage.setItem('simstaAccounts', JSON.stringify({
+        accounts: window.accounts,
+        generatedAccounts,
+        messages,
+        hasEngagementBoost,
+        hasProfileGlitter,
+        shoutoutStreak: window.shoutoutStreak,
+        lastShoutoutTime: window.lastShoutoutTime,
+        lastDailyReward: window.lastDailyReward,
+        currentAccountId: window.currentAccountId
+    }));
+    localStorage.setItem('currentAccountId', window.currentAccountId);
+    document.getElementById('signupSection').classList.add('hidden');
+    document.getElementById('appSection').classList.remove('hidden');
+    document.getElementById('usernameDisplay').textContent = window.user.username;
+    document.getElementById('profilePicDisplay').src = window.user.profilePic;
+    window.addNotification(`Welcome to Simsta, ${window.user.username}! 💕`, false);
+    window.simulateInitialFollowers = window.simulateInitialFollowers || function() {}; // Placeholder if not defined
+    if (autoSaveEnabled) saveUserData();
+    window.closeSelfieSnap = window.closeSelfieSnap || function() {}; // Placeholder if not defined
+    if (window.growthLoopId) clearInterval(window.growthLoopId);
+    window.startGrowthLoop();
+    updateUI();
+}
+
 // Admin Panel Functions
 function showPasswordModal() {
     if (!window.user) {
@@ -724,35 +789,6 @@ function adjustPostCount(newPostCount) {
 }
 
 // Core UI Functions
-function finishAccountCreation(newUser) {
-    window.accounts.push(newUser);
-    window.currentAccountId = newUser.id;
-    window.user = newUser;
-    localStorage.setItem('simstaAccounts', JSON.stringify({
-        accounts: window.accounts,
-        generatedAccounts,
-        messages,
-        hasEngagementBoost,
-        hasProfileGlitter,
-        shoutoutStreak: window.shoutoutStreak,
-        lastShoutoutTime: window.lastShoutoutTime,
-        lastDailyReward: window.lastDailyReward,
-        currentAccountId: window.currentAccountId
-    }));
-    localStorage.setItem('currentAccountId', window.currentAccountId);
-    document.getElementById('signupSection').classList.add('hidden');
-    document.getElementById('appSection').classList.remove('hidden');
-    document.getElementById('usernameDisplay').textContent = window.user.username;
-    document.getElementById('profilePicDisplay').src = window.user.profilePic;
-    window.addNotification(`Welcome to Simsta, ${window.user.username}! 💕`, false);
-    window.simulateInitialFollowers = window.simulateInitialFollowers || function() {}; // Placeholder if not defined
-    if (autoSaveEnabled) saveUserData();
-    window.closeSelfieSnap = window.closeSelfieSnap || function() {}; // Placeholder if not defined
-    if (window.growthLoopId) clearInterval(window.growthLoopId);
-    window.startGrowthLoop();
-    updateUI();
-}
-
 function resetAccount() {
     if (confirm('Start fresh, babe?')) {
         const newUser = {
@@ -834,7 +870,6 @@ function updateUI() {
     if (now - lastUpdate < 500) return;
     lastUpdate = now;
 
-    // Ensure signup section is shown and app section is hidden if no user
     if (!window.user) {
         document.getElementById('signupSection').classList.remove('hidden');
         document.getElementById('appSection').classList.add('hidden');
@@ -845,7 +880,6 @@ function updateUI() {
         return;
     }
 
-    // Show app section only if user exists
     document.getElementById('signupSection').classList.add('hidden');
     document.getElementById('appSection').classList.remove('hidden');
 
@@ -968,11 +1002,7 @@ document.addEventListener('keydown', (e) => {
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM ready');
-    // Only initialize UI if user exists, otherwise force signup
-    if (!window.user) {
-        document.getElementById('signupSection').classList.remove('hidden');
-        document.getElementById('appSection').classList.add('hidden');
-    } else {
+    if (window.user) {
         document.getElementById('signupSection').classList.add('hidden');
         document.getElementById('appSection').classList.remove('hidden');
         window.simulateOfflineGrowth();
@@ -980,6 +1010,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.virtualBaeActive) window.toggleVirtualBae = window.toggleVirtualBae || function() {}; // Placeholder
         if (window.paranoidMode) window.toggleParanoidMode();
         updateUI();
+    } else {
+        document.getElementById('signupSection').classList.remove('hidden');
+        document.getElementById('appSection').classList.add('hidden');
     }
 });
 
