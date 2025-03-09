@@ -897,7 +897,7 @@ window.startGrowthLoop = function() {
         if (autoSaveEnabled) window.saveUserData(); // Ensure save after like growth
         window.updateUI();
     }, 4000); // 4 seconds for like growth
-};
+});
 
     // Like growth every 4 seconds
     setInterval(() => {
