@@ -3,7 +3,7 @@ console.log('script.js starting');
 // Saving System Variables and Functions
 let autoSaveEnabled = true;
 const ADMIN_PASSWORD = "admin123";
-const GAME_OWNER_USERNAME = "Sophia"; // Define the game owner (case-insensitive)
+const GAME_OWNER_USERNAME = "sophhiaa"; // Define the game owner (case-insensitive)
 window.generatedAccounts = window.generatedAccounts || {};
 let saveTimeout = null;
 window.messages = window.messages || [];
