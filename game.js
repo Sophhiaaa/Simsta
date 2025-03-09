@@ -32,7 +32,7 @@ window.formatNumber = function(num) {
     return num.toString();
 };
 
-// Ensure addNotification matches script.js format and triggers save
+// Ensure addNotification triggers save when needed
 window.addNotification = function(message, skipSave = true) {
     if (!window.user) {
         console.error('No user in addNotification');
@@ -191,7 +191,6 @@ window.hostEvent = function() {
     window.updateUI();
 };
 
-// Existing giveShoutout for generated accounts
 window.giveShoutout = function() {
     if (window.user.followers < 2000) {
         window.addNotification('Need 2K followers for shoutouts, queen! 📣');
@@ -276,6 +275,10 @@ window.generatePost = function(silent = false) {
     if (!Array.isArray(window.user.posts)) window.user.posts = [];
     window.user.posts.unshift(post);
     window.simulateEngagement(0); // Trigger engagement immediately after posting
+    // Add a small follower gain for each post
+    const followerGain = Math.floor(Math.random() * 10) + 5; // 5-15 followers per post
+    window.user.followers += followerGain;
+    window.addNotification(`Your post attracted ${followerGain} new followers! 🌟`);
     if (!silent) window.addNotification('Generated a fab post! 🌟');
     console.log('After generatePost - posts:', window.user.posts.length, 'followers:', window.user.followers, 'new post likes:', post.likes);
     if (autoSaveEnabled) window.saveUserData();
@@ -327,6 +330,9 @@ window.createManualPost = function() {
             if (!Array.isArray(window.user.posts)) window.user.posts = [];
             window.user.posts.unshift(post);
             window.simulateEngagement(0); // Trigger engagement immediately
+            const followerGain = Math.floor(Math.random() * 10) + 5;
+            window.user.followers += followerGain;
+            window.addNotification(`Your post attracted ${followerGain} new followers! 🌟`);
             console.log('After createManualPost with image - posts:', window.user.posts.length, 'followers:', window.user.followers, 'new post likes:', post.likes);
             if (autoSaveEnabled) window.saveUserData();
             imageInput.value = '';
@@ -339,6 +345,9 @@ window.createManualPost = function() {
         if (!Array.isArray(window.user.posts)) window.user.posts = [];
         window.user.posts.unshift(post);
         window.simulateEngagement(0); // Trigger engagement immediately
+        const followerGain = Math.floor(Math.random() * 10) + 5;
+        window.user.followers += followerGain;
+        window.addNotification(`Your post attracted ${followerGain} new followers! 🌟`);
         console.log('After createManualPost without image - posts:', window.user.posts.length, 'followers:', window.user.followers, 'new post likes:', post.likes);
         if (autoSaveEnabled) window.saveUserData();
         captionInput.value = '';
@@ -401,7 +410,7 @@ window.buyProfileGlitter = function() {
     window.user.money -= 50;
     hasProfileGlitter = true;
     window.addNotification('Bought Profile Glitter! Your username sparkles! ✨');
-    console.log('After buyProfileGlitter - money:', window.user.money, 'hasProfileGlitter:', hasEngagementBoost);
+    console.log('After buyProfileGlitter - money:', window.user.money, 'hasProfileGlitter:', hasProfileGlitter);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
 };
@@ -745,18 +754,18 @@ window.refreshPost = function(index) {
     const viralChance = Math.random();
     if (viralChance > 0.9 && !post.isViral) {
         post.isViral = true;
-        const likeGain = Math.floor(window.user.followers * 0.1);
+        const likeGain = Math.floor(window.user.followers * 0.1) + 50; // Ensure some likes even with 0 followers
         post.likes += likeGain;
-        window.addNotification('Your post went viral! +${window.formatNumber(likeGain)} likes 🌟');
+        window.addNotification(`Your post went viral! +${window.formatNumber(likeGain)} likes 🌟`);
     } else if (viralChance > 0.95 && post.isViral && !post.isSuperViral) {
         post.isSuperViral = true;
-        const likeGain = Math.floor(window.user.followers * 0.2);
+        const likeGain = Math.floor(window.user.followers * 0.2) + 100;
         post.likes += likeGain;
-        window.addNotification('Super viral moment! +${window.formatNumber(likeGain)} likes 🚀');
+        window.addNotification(`Super viral moment! +${window.formatNumber(likeGain)} likes 🚀`);
     } else {
-        const likeGain = Math.floor(Math.random() * window.user.followers * 0.01) + 10;
+        const likeGain = Math.floor(Math.random() * (window.user.followers * 0.01 + 10)) + 10; // Minimum 10 likes
         post.likes += likeGain;
-        const newCommentsCount = Math.floor(Math.random() * 5);
+        const newCommentsCount = Math.floor(Math.random() * 5) + 1; // At least 1 comment
         for (let i = 0; i < newCommentsCount; i++) {
             post.comments.push({
                 username: window.generateRandomUsername(),
@@ -840,7 +849,7 @@ window.startGrowthLoop = function() {
         window.simulateGeneratedAccounts();
         window.simulateMessages();
         console.log('Growth loop triggered - followers:', window.user.followers);
-    }, 30000); // 30 seconds for testing, adjust as needed
+    }, 15000); // Reduced to 15 seconds for faster testing
 };
 
 window.simulateEngagement = function(index) {
@@ -854,8 +863,8 @@ window.simulateEngagement = function(index) {
             console.error('Invalid post index in simulateEngagement:', index);
             return;
         }
-        let likeGain = Math.floor(Math.random() * window.user.followers * (hasEngagementBoost ? 0.075 : 0.05)) + 10;
-        const commentsCount = Math.floor(Math.random() * 5);
+        let likeGain = Math.floor(Math.random() * (window.user.followers * (hasEngagementBoost ? 0.075 : 0.05) + 10)) + 10; // Minimum 10 likes
+        const commentsCount = Math.floor(Math.random() * 5) + 1; // At least 1 comment
         if (window.user.followers >= 100000) likeGain += Math.floor(Math.random() * 1000);
         post.likes += likeGain;
         for (let i = 0; i < commentsCount; i++) {
@@ -871,8 +880,8 @@ window.simulateEngagement = function(index) {
         console.log('After simulateEngagement (single post) - post likes:', post.likes, 'comments:', post.comments.length, 'followers:', window.user.followers);
     } else {
         window.user.posts.slice(0, 5).forEach(post => {
-            let likeGain = Math.floor(Math.random() * window.user.followers * 0.01) + 5;
-            const commentsCount = Math.floor(Math.random() * 3);
+            let likeGain = Math.floor(Math.random() * (window.user.followers * 0.01 + 5)) + 5; // Minimum 5 likes
+            const commentsCount = Math.floor(Math.random() * 3) + 1; // At least 1 comment
             if (window.user.followers >= 100000) likeGain += Math.floor(Math.random() * 500);
             post.likes += likeGain;
             for (let i = 0; i < commentsCount; i++) {
