@@ -585,6 +585,14 @@ img {
     max-width: 300px; /* Cap width to prevent stretching beyond text */
 }
 
+@media (max-width: 600px) {
+    .notification-toast {
+        font-size: 12px; /* Slightly smaller for mobile */
+        padding: 8px 16px; /* Adjusted padding for mobile */
+        max-width: 250px; /* Smaller cap for mobile */
+    }
+}
+
 /* Header and Navigation Styles */
 header {
     background: linear-gradient(135deg, #ffe6f2, #ffb6c1);
