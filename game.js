@@ -423,17 +423,17 @@ window.renderPosts = function() {
         return;
     }
     if (!Array.isArray(window.user.posts)) window.user.posts = [];
-    feed.innerHTML = '';
-    const postsToShow = window.user.posts.slice(0, 10);
+    feed.innerHTML = ''; // Clear once
+    const postsToShow = window.user.posts.slice(0, 5); // Limit to 5 posts initially
     console.log('Rendering posts:', postsToShow.length);
     postsToShow.forEach((post, index) => window.renderPost(post, index, feed));
 
-    if (window.user.posts.length > 10) {
+    if (window.user.posts.length > 5) {
         const loadMore = document.createElement('button');
         loadMore.textContent = 'Load More Posts ✨';
         loadMore.style.background = '#ff69b4';
         loadMore.onclick = () => {
-            const nextBatch = window.user.posts.slice(feed.children.length, feed.children.length + 10);
+            const nextBatch = window.user.posts.slice(feed.children.length, feed.children.length + 5);
             nextBatch.forEach((post, index) => window.renderPost(post, index + feed.children.length, feed));
             if (feed.children.length >= window.user.posts.length) loadMore.remove();
         };
@@ -746,45 +746,50 @@ window.simulateEngagement = function(index) {
 
     if (followerCount >= 100000) {
         likes = Math.floor(Math.random() * 15000) + 5000 + Math.floor(followerCount * 0.05);
-        commentCount = Math.floor(likes * 0.0001); // Reduced to 0.01% to fix lag
-        if (Math.random() < 0.1) {
-            likes *= 2;
-            commentCount *= 2;
-            window.user.posts[index].isSuperViral = true;
-            window.addNotification('SUPER VIRAL post! 🌟✨');
-        } else if (Math.random() < 0.3) {
-            likes *= 1.5;
-            commentCount *= 1.5;
-            window.user.posts[index].isViral = true;
-            window.addNotification('VIRAL post! 🌸');
-        }
+        commentCount = Math.floor(likes * 0.00005); // Reduced to 0.005% to further reduce lag
     } else if (followerCount >= 10000) {
         likes = Math.floor(Math.random() * 4500) + 500 + Math.floor(followerCount * 0.03);
-        commentCount = Math.floor(likes * 0.0001); // Reduced to 0.01% to fix lag
-        if (Math.random() < 0.05) {
-            likes *= 2;
-            commentCount *= 2;
-            window.user.posts[index].isSuperViral = true;
-            window.addNotification('SUPER VIRAL post! 🌟✨');
-        } else if (Math.random() < 0.2) {
-            likes *= 1.5;
-            window.user.posts[index].isViral = true;
-            window.addNotification('VIRAL post! 🌸');
-        }
+        commentCount = Math.floor(likes * 0.00005); // Reduced to 0.005%
     } else {
         likes = Math.floor(Math.random() * 480) + 20 + Math.floor(followerCount * 0.02);
-        commentCount = Math.floor(likes * 0.0001); // Reduced to 0.01% to fix lag
-        if (Math.random() < 0.03) {
-            likes *= 2;
-            window.user.posts[index].isSuperViral = true;
-            window.addNotification('SUPER VIRAL post! 🌟✨');
-        } else if (Math.random() < 0.15) {
-            likes *= 1.5;
-            window.user.posts[index].isViral = true;
-            window.addNotification('VIRAL post! 🌸');
-        }
+        commentCount = Math.floor(likes * 0.00005); // Reduced to 0.005%
     }
 
+    likes = Math.max(Math.floor(likes * (1 + hashtagBoost * 0.1)), 10);
+    if (hasEngagementBoost) {
+        likes = Math.floor(likes * 1.5);
+        hasEngagementBoost = false;
+        window.addNotification('Engagement Boost applied! Likes increased! 📈');
+    }
+
+    window.user.posts[index].likes = likes;
+    if (window.debugLikes) console.log(`Simulated engagement for post ${index}: ${likes} likes, ${commentCount} comments`);
+
+    // Limit comment generation to avoid lag
+    commentCount = Math.min(commentCount, 5); // Cap at 5 comments per engagement
+    for (let i = 0; i < commentCount; i++) {
+        const username = window.generateRandomUsername();
+        if (!Array.isArray(window.user.posts[index].comments)) window.user.posts[index].comments = [];
+        window.user.posts[index].comments.push({
+            username: username,
+            comment: window.pickRandomComment()
+        });
+        if (i === 0) window.simulateGeneratedPost(username); // Limit generated post simulation
+    }
+
+    // Simplify viral checks
+    const viralChance = Math.random();
+    if (viralChance < 0.03 && !window.user.posts[index].isSuperViral && followerCount > 100) {
+        window.user.posts[index].isSuperViral = true;
+        window.addNotification('SUPER VIRAL post! 🌟✨');
+    } else if (viralChance < 0.15 && !window.user.posts[index].isViral) {
+        window.user.posts[index].isViral = true;
+        window.addNotification('VIRAL post! 🌸');
+    }
+
+    window.user.followers += Math.floor(likes * 0.02);
+    window.checkStatus();
+};
     likes = Math.max(Math.floor(likes * (1 + hashtagBoost * 0.1)), 10);
     if (hasEngagementBoost) {
         likes = Math.floor(likes * 1.5);
@@ -846,43 +851,47 @@ window.startGrowthLoop = function() {
     if (window.growthLoopId) clearInterval(window.growthLoopId);
     window.growthLoopId = null;
 
-    // Follower growth every 6 seconds
+    // Follower growth every 3 seconds
     setInterval(() => {
         if (!window.user) return;
-        const followerCount = window.user.followers || 0; // Ensure followerCount is defined
+        const followerCount = window.user.followers || 0;
         let followerGrowth;
         if (followerCount >= 1000000) {
-            followerGrowth = Math.floor(Math.random() * 5000) + 5000; // 5,000–10,000 followers
+            followerGrowth = Math.floor(Math.random() * 5000) + 5000; // 5,000–10,000
         } else if (followerCount >= 100000) {
-            followerGrowth = Math.floor(Math.random() * 1500) + 500; // 500–2,000 followers
+            followerGrowth = Math.floor(Math.random() * 1500) + 500; // 500–2,000
         } else if (followerCount >= 10000) {
-            followerGrowth = Math.floor(Math.random() * 450) + 50; // 50–500 followers
+            followerGrowth = Math.floor(Math.random() * 450) + 50; // 50–500
         } else {
-            followerGrowth = Math.floor(Math.random() * 10) + 1; // 1–10 followers
+            followerGrowth = Math.floor(Math.random() * 10) + 1; // 1–10
         }
         window.user.followers += followerGrowth;
         window.checkStatus();
         console.log('Followers increased to:', window.user.followers);
-        if (autoSaveEnabled) window.saveUserData(); // Ensure save after follower growth
+        if (autoSaveEnabled) window.saveUserData();
+        // Batch UI update every 3 seconds
         window.updateUI();
-        6000 // 6 seconds for follower growt
-    
+    }, 3000); // 3 seconds
+
     // Like growth every 4 seconds
+    let lastLikeUpdate = Date.now();
     setInterval(() => {
         if (!window.user || !Array.isArray(window.user.posts)) return;
         const followerCount = window.user.followers || 0;
-        const maxPostsToUpdate = Math.min(window.user.posts.length, 3);
+        const maxPostsToUpdate = Math.min(window.user.posts.length, 1); // Limit to 1 post to reduce load
+        let totalLikesAdded = 0;
         for (let i = 0; i < maxPostsToUpdate; i++) {
             const post = window.user.posts[i];
             const likeGrowth = followerCount >= 1000000 ? 
-                Math.floor(Math.random() * 1000) + 500 : // 500–1,500 likes for millions
+                Math.floor(Math.random() * 1000) + 500 : // 500–1,500
                 followerCount >= 100000 ? 
-                Math.floor(Math.random() * 500) + 200 : // 200–700 likes
+                Math.floor(Math.random() * 500) + 200 : // 200–700
                 followerCount >= 10000 ? 
-                Math.floor(Math.random() * 50) + 20 : // 20–70 likes
-                Math.floor(Math.random() * 5) + 1; // 1–6 likes
+                Math.floor(Math.random() * 50) + 20 : // 20–70
+                Math.floor(Math.random() * 5) + 1; // 1–6
             post.likes += likeGrowth;
-            if (Math.random() < 0.1) {
+            totalLikesAdded += likeGrowth;
+            if (Math.random() < 0.05) { // Reduced chance of comments
                 const username = window.generateRandomUsername();
                 if (!Array.isArray(post.comments)) post.comments = [];
                 post.comments.push({
@@ -893,10 +902,11 @@ window.startGrowthLoop = function() {
             }
         }
         window.checkStatus();
-        console.log('Likes increased on up to 3 posts');
-        if (autoSaveEnabled) window.saveUserData(); // Ensure save after like growth
+        console.log('Likes increased by:', totalLikesAdded);
+        if (autoSaveEnabled) window.saveUserData();
+        // Batch UI update every 4 seconds
         window.updateUI();
-    }, 5000); // 5 seconds for like growth
+    }, 4000); // 4 seconds
 });
 
     // Like growth every 5 seconds
