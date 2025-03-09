@@ -33,22 +33,27 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div id="signupSection">
-            <h2>Create Your Account, Princess! 👑</h2>
-            <input type="text" id="username" placeholder="Enter your username">
-            <button onclick="generateUsername()">Generate Username</button>
-            <input type="file" id="profilePicInput" accept="image/*" onchange="previewProfilePic(event)">
-            <img id="profilePicPreview" class="hidden" alt="Profile Preview">
-            <button onclick="createAccount()">Sign Up</button>
-        </div>
-            <input type="file" id="profilePicInput" accept="image/*" onchange="previewProfilePic(event)">
-            <img id="profilePicPreview" class="profile-pic hidden" src="" alt="Profile Pic">
-            <div style="display: flex; gap: 10px;">
-                <button onclick="createAccount()">Sign Up</button>
-                <button onclick="goBackToSwitcher()" style="background: #ffb6c1;">Go Back 👋</button>
-            </div>
-        </div>
+    <div id="signupSection" class="hidden">
+        <h2>Create Your Account, Princess! 👑</h2>
+        <input type="text" id="username" placeholder="Enter your username">
+        <button onclick="window.generateUsername()">Generate Username</button>
+        <input type="file" id="profilePicInput" accept="image/*" onchange="window.previewProfilePic(event)">
+        <img id="profilePicPreview" class="hidden" alt="Profile Preview">
+        <button onclick="window.createAccount()">Sign Up</button>
+    </div>
+
+    <div id="appSection" class="hidden">
+        <!-- Your app content (e.g., tabs, feed, etc.) -->
+        <div id="usernameDisplay"></div>
+        <div id="profilePicDisplay"></div>
+        <div id="followerCount"></div>
+        <!-- Other app elements -->
+    </div>
+
+    <!-- Other sections like adminPanel, passwordModal, etc. -->
+    <script src="game.js"></script>
+    <script src="script.js"></script>
+</body>
 
         <div id="appSection" class="section hidden">
             <div style="display: flex; align-items: center; justify-content: space-between;">
