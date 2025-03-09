@@ -22,6 +22,9 @@ window.currentAccountIndex = 0;
 window.user = null;
 let currentDeleteUI = null; // Track the active custom delete UI
 let tempMessage = null; // Track the temporary message globally
+const LOADING_MESSAGE_TIMEOUT = 3000; // Adjustable timeout in milliseconds (default 3 seconds)
+let notificationQueue = []; // Queue to handle notifications
+let isNotificationActive = false; // Flag to track active notification
 
 function isLocalStorageAvailable() {
     try {
@@ -225,7 +228,7 @@ function loadUserData() {
     return !!window.user; // Return true if user data was loaded
 }
 
-// Add inline styles for the temporary message
+// Add inline styles for the temporary message with spinner
 const style = document.createElement('style');
 style.textContent = `
     #tempLoadMessage {
@@ -235,17 +238,44 @@ style.textContent = `
         transform: translate(-50%, -50%);
         background: linear-gradient(45deg, #ff99cc, #00cccc); /* Smudge Gradient Pink Cyan */
         color: white;
-        padding: 20px;
+        padding: 20px 30px;
         border-radius: 15px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
         text-align: center;
         font-family: 'Arial', sans-serif;
         font-size: 18px;
-        z-index: 1000;
+        z-index: 10000; /* Higher z-index to ensure visibility */
         transition: opacity 0.5s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
     #tempLoadMessage.hidden {
         display: none;
+    }
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #fff;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .notification-toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ff99cc;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        z-index: 9999;
+        margin-bottom: 10px; /* Space between notifications */
     }
 `;
 document.head.appendChild(style);
@@ -361,7 +391,24 @@ function toggleAutoSave() {
 }
 
 window.addNotification = function(message, addToList = true) {
-    console.log('Notification:', message);
+    console.log('Notification queued:', message);
+    notificationQueue.push({ message, addToList });
+
+    if (!isNotificationActive) {
+        showNextNotification();
+    }
+};
+
+function showNextNotification() {
+    if (notificationQueue.length === 0) {
+        isNotificationActive = false;
+        return;
+    }
+
+    isNotificationActive = true;
+    const { message, addToList } = notificationQueue.shift();
+    console.log('Displaying notification:', message);
+
     if (addToList && window.user && window.user.notifications) {
         window.user.notifications.unshift({
             id: Date.now(),
@@ -369,12 +416,20 @@ window.addNotification = function(message, addToList = true) {
             timestamp: new Date().toLocaleTimeString()
         });
     }
+
     const toast = document.createElement('div');
     toast.className = 'notification-toast';
     toast.textContent = message;
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-};
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            toast.remove();
+            showNextNotification(); // Show the next one after removal
+        }, 500); // Fade-out transition
+    }, 3000); // Display for 3 seconds
+}
 
 window.showAccountSwitcher = function() {
     const modal = document.getElementById('accountSwitcherModal');
@@ -886,80 +941,93 @@ function resetGameFromAdmin() {
     }
 }
 
-// Handle loading and UI updates after DOM is ready
+// Handle loading and UI updates after DOM and scripts are ready
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM ready');
 
     // Load user data
     loadUserData();
 
-    // Show temporary message if no user data is loaded
-    if (!window.user) {
-        tempMessage = document.createElement('div');
-        tempMessage.id = 'tempLoadMessage';
-        tempMessage.textContent = 'Loading your data, princess! Posting a fab update for you… 🌟 Please wait a sec! 💕';
-        document.body.appendChild(tempMessage);
-        console.log('Displayed temporary load message');
+    // Wait for game.js to ensure generatePost is available
+    const checkGameLoad = setInterval(() => {
+        if (typeof window.generatePost === 'function') {
+            clearInterval(checkGameLoad);
+            console.log('game.js loaded, proceeding with initialization');
 
-        // Set timeout to remove the message after 3 seconds
-        setTimeout(() => {
-            try {
-                if (tempMessage && tempMessage.parentNode) {
-                    tempMessage.style.opacity = '0';
-                    setTimeout(() => {
-                        try {
-                            if (tempMessage && tempMessage.parentNode) {
-                                tempMessage.remove();
-                                console.log('Temporary load message removed successfully');
-                            } else {
-                                console.log('Temporary load message not removed - element or parent missing');
-                            }
-                        } catch (e) {
-                            console.error('Error removing temp message:', e);
-                            // Fallback: hide and remove if removal fails
-                            if (tempMessage) {
-                                tempMessage.style.display = 'none';
-                                tempMessage.remove();
-                                console.log('Fallback: Temporary load message hidden and removed');
-                            }
+            // Show temporary message if no user data is loaded
+            if (!window.user) {
+                tempMessage = document.createElement('div');
+                tempMessage.id = 'tempLoadMessage';
+                const spinner = document.createElement('div');
+                spinner.className = 'spinner';
+                tempMessage.appendChild(spinner);
+                tempMessage.appendChild(document.createTextNode(' Loading your data, princess! Posting a fab update for you… 🌟 Please wait a sec! 💕'));
+                document.body.appendChild(tempMessage);
+                console.log('Displayed temporary load message with spinner');
+
+                // Set timeout to remove the message with confirmation
+                setTimeout(() => {
+                    try {
+                        if (tempMessage && tempMessage.parentNode) {
+                            tempMessage.style.opacity = '0';
+                            setTimeout(() => {
+                                try {
+                                    if (tempMessage && tempMessage.parentNode) {
+                                        tempMessage.remove();
+                                        window.addNotification('Data loaded, queen! ✨', false); // Confirmation
+                                        console.log('Temporary load message removed successfully');
+                                    } else {
+                                        console.log('Temporary load message not removed - element or parent missing');
+                                    }
+                                } catch (e) {
+                                    console.error('Error removing temp message:', e);
+                                    // Fallback: hide and remove if removal fails
+                                    if (tempMessage) {
+                                        tempMessage.style.display = 'none';
+                                        tempMessage.remove();
+                                        window.addNotification('Data loaded, queen! ✨', false); // Confirmation
+                                        console.log('Fallback: Temporary load message hidden and removed');
+                                    }
+                                }
+                            }, 500); // Fade-out transition
+                        } else {
+                            console.log('Temporary load message not found for removal');
                         }
-                    }, 500); // Fade-out transition
-                } else {
-                    console.log('Temporary load message not found for removal');
-                }
-            } catch (e) {
-                console.error('Error fading out temp message:', e);
-                // Fallback: hide and remove if fade-out fails
-                if (tempMessage) {
-                    tempMessage.style.display = 'none';
-                    tempMessage.remove();
-                    console.log('Fallback: Temporary load message hidden and removed');
-                }
+                    } catch (e) {
+                        console.error('Error fading out temp message:', e);
+                        // Fallback: hide and remove if fade-out fails
+                        if (tempMessage) {
+                            tempMessage.style.display = 'none';
+                            tempMessage.remove();
+                            window.addNotification('Data loaded, queen! ✨', false); // Confirmation
+                            console.log('Fallback: Temporary load message hidden and removed');
+                        }
+                    }
+
+                    // Trigger auto-post if no user data
+                    if (!window.user && typeof window.generatePost === 'function') {
+                        console.log('Triggering auto-post on refresh');
+                        window.generatePost(true); // Silent post
+                        window.addNotification('Posted a fab update for you on refresh, princess! 🌟', false);
+                    }
+                }, LOADING_MESSAGE_TIMEOUT); // Use configurable timeout
             }
-        }, 3000); // 3 seconds timeout
-    }
 
-    // Update UI and trigger auto-post if needed
-    if (window.user && typeof window.generatePost === 'function') {
-        console.log('User data loaded, triggering auto-post on refresh');
-        window.generatePost(true); // Silent post
-        window.addNotification('Posted a fab update for you on refresh, princess! 🌟', false);
-    }
-
-    // Ensure UI is updated after everything
-    updateUI();
-
-    if (window.user) {
-        document.getElementById('signupSection').classList.add('hidden');
-        document.getElementById('appSection').classList.remove('hidden');
-        window.simulateOfflineGrowth();
-        window.startGrowthLoop();
-        if (window.virtualBaeActive) window.toggleVirtualBae();
-        if (window.paranoidMode) window.toggleParanoidMode();
-    } else {
-        document.getElementById('signupSection').classList.remove('hidden');
-        document.getElementById('appSection').classList.add('hidden');
-    }
+            // Update UI and initialize other features
+            updateUI();
+            if (window.user) {
+                document.getElementById('signupSection').classList.add('hidden');
+                document.getElementById('appSection').classList.remove('hidden');
+                window.simulateOfflineGrowth();
+                window.startGrowthLoop();
+                if (window.virtualBaeActive) window.toggleVirtualBae();
+                if (window.paranoidMode) window.toggleParanoidMode();
+            } else {
+                document.getElementById('signupSection').classList.remove('hidden');
+                document.getElementById('appSection').classList.add('hidden');
+            }
+        }
+    }, 100); // Check every 100ms until game.js is loaded
 });
 
 // Auto-export on page close or refresh
