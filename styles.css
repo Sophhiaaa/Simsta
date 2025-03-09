@@ -570,14 +570,33 @@ img {
 /* Notification Toast */
 .notification-toast {
     position: fixed;
-    bottom: 20px;
+    bottom: 20px; /* Start at the bottom */
     right: 20px;
-    background: #ff99cc;
+    background: linear-gradient(45deg, #ff99cc, #ffb6c1); /* Smudge Gradient Pink Cyan */
     color: white;
     padding: 10px 20px;
     border-radius: 5px;
     z-index: 1000;
     animation: fadeInOut 3s ease-in-out forwards;
+    width: 80%; /* Adjust width for mobile */
+    max-width: 300px; /* Cap width for larger screens */
+    margin-bottom: 10px; /* Space between notifications */
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+/* Stack notifications vertically by dynamically adjusting the bottom position */
+.notification-toast:nth-last-child(1) {
+    bottom: 20px; /* First notification */
+}
+.notification-toast:nth-last-child(2) {
+    bottom: 70px; /* Second notification (20px + height + margin) */
+}
+.notification-toast:nth-last-child(3) {
+    bottom: 120px; /* Third notification */
+}
+.notification-toast:nth-last-child(n+4) {
+    display: none; /* Hide additional notifications if too many */
 }
 
 @keyframes fadeIn {
@@ -623,6 +642,20 @@ nav button:hover {
     .save-options button, .social-buttons button, .fame-buttons button, .tab-button {
         flex: none;
         width: 100%;
+        padding: 4px 8px; /* Smaller padding for mobile */
+        font-size: 12px; /* Smaller font size */
+        min-height: 28px; /* Slightly smaller height */
+    }
+    /* Specific button types */
+    button {
+        padding: 4px 8px; /* General button size reduction */
+        font-size: 12px;
+        min-height: 28px;
+    }
+    .trash-button, .refresh-button, .shoutout-button, .comment-input button, .admin-content button, .modal-content button, .shop-item button {
+        padding: 4px 8px; /* Consistent smaller padding */
+        font-size: 12px;
+        min-height: 28px;
     }
     .admin-content {
         width: 95%;
@@ -634,25 +667,43 @@ nav button:hover {
         bottom: 20px;
     }
     nav button {
-        font-size: 14px;
-        padding: 8px 15px;
+        font-size: 12px;
+        padding: 6px 12px;
     }
     .container {
         padding: 10px;
     }
     .section h3 {
-        font-size: 20px;
+        font-size: 18px;
     }
     .profile-pic {
         width: 40px;
         height: 40px;
     }
     h2 {
-        font-size: 20px;
+        font-size: 18px;
     }
-    input, textarea, button {
-        font-size: 14px;
-        padding: 8px;
+    input, textarea {
+        font-size: 12px;
+        padding: 6px;
+    }
+    .notification-toast {
+        width: 85%;
+        max-width: 250px;
+        right: 50%;
+        transform: translateX(50%); /* Center horizontally */
+        font-size: 12px;
+        padding: 8px 16px;
+    }
+    /* Adjust notification stacking for mobile */
+    .notification-toast:nth-last-child(1) {
+        bottom: 15px;
+    }
+    .notification-toast:nth-last-child(2) {
+        bottom: 60px; /* Adjusted for smaller height */
+    }
+    .notification-toast:nth-last-child(3) {
+        bottom: 105px;
     }
 }
 
