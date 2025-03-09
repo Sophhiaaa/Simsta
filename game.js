@@ -865,7 +865,7 @@ window.startGrowthLoop = function() {
         console.log('Followers increased to:', window.user.followers);
         if (autoSaveEnabled) window.saveUserData(); // Ensure save after follower growth
         window.updateUI();
-        3000 // 3 seconds for follower growt
+        6000 // 6 seconds for follower growt
     
     // Like growth every 4 seconds
     setInterval(() => {
@@ -896,7 +896,7 @@ window.startGrowthLoop = function() {
         console.log('Likes increased on up to 3 posts');
         if (autoSaveEnabled) window.saveUserData(); // Ensure save after like growth
         window.updateUI();
-    }, 4000); // 4 seconds for like growth
+    }, 5000); // 5 seconds for like growth
 });
 
     // Like growth every 4 seconds
