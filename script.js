@@ -651,17 +651,29 @@ function adjustPostCount(newPostCount) {
 }
 
 // Core UI Functions
-function previewProfilePic(event) {
+window.previewProfilePic = function(event) {
+    console.log('Profile picture selected!'); // Debugging
     const file = event.target.files[0];
+    const preview = document.getElementById('profilePicPreview');
     if (file) {
         const reader = new FileReader();
         reader.onload = (e) => {
-            document.getElementById('profilePicPreview').src = e.target.result;
-            document.getElementById('profilePicPreview').classList.remove('hidden');
+            if (preview) {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+                console.log('Profile picture preview updated.');
+            } else {
+                console.error('Profile picture preview element not found! Check ID "profilePicPreview" in HTML.');
+            }
+        };
+        reader.onerror = (e) => {
+            console.error('Error reading profile picture for preview:', e);
         };
         reader.readAsDataURL(file);
+    } else {
+        console.warn('No file selected for profile picture.');
     }
-}
+};
 
 window.createAccount = function() {
     console.log('Sign Up button clicked!'); // Debugging
