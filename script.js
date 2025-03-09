@@ -118,7 +118,7 @@ function saveUserData(showConfirmation = false) {
     }, 2000);
 }
 
-// Optimized loadUserData with auto-post on refresh
+// Optimized loadUserData with auto-post and temporary UI message
 function loadUserData() {
     console.log('loadUserData called - Starting data load process');
     if (!isLocalStorageAvailable()) {
@@ -169,6 +169,16 @@ function loadUserData() {
         } else {
             console.log('No data in localStorage');
         }
+    }
+
+    // Show temporary UI message if no user data is loaded yet
+    let tempMessage = null;
+    if (!window.user) {
+        tempMessage = document.createElement('div');
+        tempMessage.id = 'tempLoadMessage';
+        tempMessage.textContent = 'Loading your data, princess! Posting a fab update for you… 🌟 Please wait a sec! 💕';
+        document.body.appendChild(tempMessage);
+        console.log('Displayed temporary load message');
     }
 
     // Apply loaded data if available
@@ -223,16 +233,54 @@ function loadUserData() {
     // Update UI immediately after loading
     updateUI();
 
-    // If user data was loaded, auto-post to ensure data visibility
+    // If user data was loaded or auto-post is needed, trigger auto-post and handle message
     if (window.user && typeof window.generatePost === 'function') {
         console.log('User data loaded, triggering auto-post on refresh');
         window.generatePost(true); // Silent post (no "Generated a fab post!" notification)
         window.addNotification('Posted a fab update for you on refresh, princess! 🌟', false);
+    } else if (tempMessage) {
+        // If no user data and auto-post is about to occur, show the message for 5 seconds
+        setTimeout(() => {
+            if (tempMessage && tempMessage.parentNode) {
+                tempMessage.style.opacity = '0';
+                setTimeout(() => {
+                    if (tempMessage && tempMessage.parentNode) {
+                        tempMessage.remove();
+                        console.log('Temporary load message removed');
+                    }
+                }, 500); // Allow fade-out transition
+            }
+        }, 5000); // Display for 5 seconds
     }
 
     console.log('loadUserData completed - final user state:', JSON.stringify(window.user, null, 2));
     return !!window.user; // Return true if user data was loaded
 }
+
+// Add inline styles for the temporary message
+const style = document.createElement('style');
+style.textContent = `
+    #tempLoadMessage {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(45deg, #ff99cc, #00cccc); /* Smudge Gradient Pink Cyan */
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        font-family: 'Arial', sans-serif;
+        font-size: 18px;
+        z-index: 1000;
+        transition: opacity 0.5s ease;
+    }
+    #tempLoadMessage.hidden {
+        display: none;
+    }
+`;
+document.head.appendChild(style);
 
 function showSaveConfirmation() {
     let confirmation = document.getElementById('saveConfirmation');
