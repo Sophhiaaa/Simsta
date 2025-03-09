@@ -44,7 +44,7 @@ function isSessionStorageAvailable() {
     }
 }
 
-// Enhanced saveUserData with better account handling
+// Enhanced saveUserData with better account handling and debugging
 function saveUserData(showConfirmation = false) {
     if (!window.user) {
         console.log('No user to save');
@@ -56,24 +56,26 @@ function saveUserData(showConfirmation = false) {
     }
     // Update the current account in the accounts array
     window.accounts[window.currentAccountIndex] = window.user;
+    console.log('Saving user data:', JSON.stringify(window.user, null, 2)); // Debug: Log the full user object
     if (saveTimeout) clearTimeout(saveTimeout);
     saveTimeout = setTimeout(() => {
         try {
             const minimalData = {
                 accounts: window.accounts.map(account => ({
+                    id: account.id, // Ensure ID is saved
                     username: account.username,
-                    followers: account.followers,
+                    followers: account.followers, // Ensure followers are saved
                     money: account.money,
-                    posts: account.posts.slice(0, 20), // Limit to 20 posts to reduce size
+                    posts: account.posts, // Save all posts (no slice for now to test)
                     verified: account.verified,
                     famous: account.famous,
                     profilePic: account.profilePic,
                     theme: account.theme,
-                    notifications: account.notifications ? account.notifications.slice(0, 10) : [],
+                    notifications: account.notifications || [],
                     sponsored: account.sponsored || false,
                     eventHosted: account.eventHosted || false,
                     lastActive: account.lastActive || Date.now(),
-                    trashBin: account.trashBin ? account.trashBin.slice(0, 10) : []
+                    trashBin: account.trashBin || [] // Ensure trashBin is saved
                 })),
                 generatedAccounts: Object.fromEntries(Object.entries(generatedAccounts).slice(0, 5)), // Limit to 5 generated accounts
                 messages: messages.slice(0, 10), // Limit to 10 messages
@@ -85,8 +87,8 @@ function saveUserData(showConfirmation = false) {
                 currentAccountIndex: window.currentAccountIndex
             };
             const dataToSave = JSON.stringify(minimalData);
+            console.log('Data to save:', dataToSave); // Debug: Log the serialized data
             latestAutoSave = dataToSave;
-            console.log('latestAutoSave set, length:', dataToSave.length);
             if (isSessionStorageAvailable()) {
                 try {
                     sessionStorage.setItem('simstaLatestAutoSave', dataToSave);
@@ -137,12 +139,13 @@ function loadUserData() {
                 window.lastDailyReward = parsedData.lastDailyReward || 0;
                 window.currentAccountIndex = parsedData.currentAccountIndex || 0;
                 window.user = window.accounts[window.currentAccountIndex] || null;
+                console.log('Loaded from sessionStorage - accounts:', window.accounts, 'user:', window.user); // Debug: Log loaded data
                 if (window.user) {
-                    console.log('Loaded from sessionStorage');
-                    window.addNotification('Auto-loaded last save from session! 💾', false);
-                    // Ensure posts and trashBin are properly initialized
+                    // Ensure all arrays are initialized
                     if (!Array.isArray(window.user.posts)) window.user.posts = [];
+                    if (!Array.isArray(window.user.notifications)) window.user.notifications = [];
                     if (!Array.isArray(window.user.trashBin)) window.user.trashBin = [];
+                    window.addNotification('Auto-loaded last save from session! 💾', false);
                     return;
                 }
             } catch (e) {
@@ -174,11 +177,13 @@ function loadUserData() {
             window.currentAccountIndex = parsedData.currentAccountIndex || 0;
             window.user = window.accounts[window.currentAccountIndex] || null;
 
+            console.log('Loaded from localStorage - accounts:', window.accounts, 'user:', window.user); // Debug: Log loaded data
             if (window.user) {
                 window.user = {
+                    id: window.user.id || (window.user.username + '_' + Date.now()), // Ensure ID is preserved or generated
                     username: window.user.username || 'DefaultUser',
                     followers: Number(window.user.followers) || 0,
-                    posts: Array.isArray(window.user.posts) ? window.user.posts : [],
+                    posts: Array.isArray(window.user.posts) ? window.user.posts : [], // Ensure posts are loaded
                     money: Number(window.user.money) || 0,
                     notifications: Array.isArray(window.user.notifications) ? window.user.notifications : [],
                     verified: window.user.verified || false,
@@ -187,7 +192,7 @@ function loadUserData() {
                     sponsored: window.user.sponsored || false,
                     eventHosted: window.user.eventHosted || false,
                     profilePic: window.user.profilePic || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
-                    trashBin: window.user.trashBin || []
+                    trashBin: Array.isArray(window.user.trashBin) ? window.user.trashBin : []
                 };
                 window.user.posts = window.user.posts.map(post => ({
                     likes: Number(post.likes) || 0,
@@ -207,7 +212,7 @@ function loadUserData() {
                         generatedAccounts[username].posts = [];
                     }
                 });
-                console.log('User loaded successfully from localStorage');
+                console.log('User loaded successfully from localStorage with posts:', window.user.posts, 'followers:', window.user.followers);
             } else {
                 console.log('No valid user in saved data');
                 window.accounts = [];
