@@ -906,7 +906,7 @@ window.startGrowthLoop = function() {
         // Batch UI update every 4 seconds
         window.updateUI();
     }, 4000); // 4 seconds
-});
+};
 
     // Like growth every 5 seconds
     setInterval(() => {
