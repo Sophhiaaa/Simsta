@@ -1,4 +1,4 @@
-console.log('script.js starting');
+console.log('script.js starting, Sophia! 💖');
 
 // Saving System Variables and Functions
 let autoSaveEnabled = true;
@@ -18,10 +18,18 @@ window.growthLoopId = null;
 window.accounts = [];
 window.currentAccountIndex = 0;
 window.user = null;
-let currentDeleteUI = null; // Track the active custom delete UI
-let notificationQueue = []; // Queue to manage notifications
-let isNotificationActive = false; // Flag to track active notification
-window.isUserLoaded = false; // Flag to signal when user is loaded
+let currentDeleteUI = null;
+let notificationQueue = [];
+let isNotificationActive = false;
+window.isUserLoaded = false;
+
+// Utility function for formatting numbers (was missing!)
+window.formatNumber = function(num) {
+    if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(2).replace(/\.?0+$/, '') + 'B';
+    if (num >= 1_000_000) return (num / 1_000_000).toFixed(2).replace(/\.?0+$/, '') + 'M';
+    if (num >= 1_000) return (num / 1_000).toFixed(2).replace(/\.?0+$/, '') + 'K';
+    return num.toString();
+};
 
 function isLocalStorageAvailable() {
     try {
@@ -30,7 +38,7 @@ function isLocalStorageAvailable() {
         localStorage.removeItem(testKey);
         return true;
     } catch (e) {
-        console.error('localStorage not available:', e);
+        console.error('localStorage not available, Sophia!:', e);
         return false;
     }
 }
@@ -42,18 +50,18 @@ function isSessionStorageAvailable() {
         sessionStorage.removeItem(testKey);
         return true;
     } catch (e) {
-        console.error('sessionStorage not available:', e);
+        console.error('sessionStorage not available, babe!:', e);
         return false;
     }
 }
 
 function saveUserData(showConfirmation = false) {
     if (!window.user) {
-        console.log('No user to save');
+        console.log('No user to save, girly!');
         return;
     }
     if (!isLocalStorageAvailable()) {
-        console.error('localStorage is not available');
+        console.error('localStorage is not available, Sophia!');
         return;
     }
     window.accounts[window.currentAccountIndex] = window.user;
@@ -65,7 +73,7 @@ function saveUserData(showConfirmation = false) {
                     username: account.username,
                     followers: account.followers,
                     money: account.money,
-                    posts: account.posts.slice(0, 20), // Limit to 20 posts
+                    posts: account.posts.slice(0, 20),
                     verified: account.verified,
                     famous: account.famous,
                     profilePic: account.profilePic,
@@ -76,8 +84,8 @@ function saveUserData(showConfirmation = false) {
                     lastActive: account.lastActive || Date.now(),
                     trashBin: account.trashBin ? account.trashBin.slice(0, 10) : []
                 })),
-                generatedAccounts: Object.fromEntries(Object.entries(generatedAccounts).slice(0, 5)),
-                messages: messages.slice(0, 10),
+                generatedAccounts: Object.fromEntries(Object.entries(window.generatedAccounts).slice(0, 5)),
+                messages: window.messages.slice(0, 10),
                 hasEngagementBoost,
                 hasProfileGlitter,
                 shoutoutStreak: window.shoutoutStreak,
@@ -87,10 +95,11 @@ function saveUserData(showConfirmation = false) {
             };
             const dataToSave = JSON.stringify(minimalData);
             latestAutoSave = dataToSave;
-            console.log('Saved data, length:', dataToSave.length);
+            console.log('latestAutoSave set for Sophia, length:', dataToSave.length);
             if (isSessionStorageAvailable()) {
                 try {
                     sessionStorage.setItem('simstaLatestAutoSave', dataToSave);
+                    console.log('Saved to sessionStorage, babe!');
                 } catch (e) {
                     console.warn('sessionStorage save failed:', e);
                 }
@@ -99,37 +108,69 @@ function saveUserData(showConfirmation = false) {
                 try {
                     localStorage.setItem('simstaAccounts', dataToSave);
                     localStorage.setItem('simstaBackup', dataToSave);
+                    console.log('Saved to localStorage, my pink princess!');
                 } catch (e) {
                     console.warn('localStorage save failed (possibly full):', e);
                     isLocalStorageFull = true;
                     if (!window.storageFullNotified) {
-                        window.addNotification('Storage full! Using auto-exported files instead. 📤', false);
+                        window.addNotification('Storage full, Sophia! Using auto-export instead! 📤', false);
                         window.storageFullNotified = true;
                     }
-                    window.exportUserData(true); // Auto-export to file on quota exceeded
+                    window.exportUserData(true);
                 }
             }
             if (showConfirmation) showSaveConfirmation();
         } catch (e) {
-            console.error('Save error:', e);
+            console.error('Save error, Sophia!:', e);
+            window.addNotification('Oops, couldn’t save, princess! 💔', false);
         }
     }, 2000);
 }
 
 function loadUserData() {
-    console.log('loadUserData called');
+    console.log('loadUserData called for Sophia!');
     try {
         if (!isLocalStorageAvailable()) {
-            console.error('localStorage is not available');
-            alert('Your browser does not support localStorage.');
+            console.error('localStorage is not available, babe!');
+            alert('Oh no, Sophia! Your browser doesn’t support localStorage, cutie!');
             return;
+        }
+
+        if (isSessionStorageAvailable()) {
+            const sessionData = sessionStorage.getItem('simstaLatestAutoSave');
+            if (sessionData) {
+                try {
+                    const parsedData = JSON.parse(sessionData);
+                    window.accounts = parsedData.accounts || [];
+                    window.generatedAccounts = parsedData.generatedAccounts || {};
+                    window.messages = parsedData.messages || [];
+                    hasEngagementBoost = parsedData.hasEngagementBoost || false;
+                    hasProfileGlitter = parsedData.hasProfileGlitter || false;
+                    window.shoutoutStreak = parsedData.shoutoutStreak || 0;
+                    window.lastShoutoutTime = parsedData.lastShoutoutTime || 0;
+                    window.lastDailyReward = parsedData.lastDailyReward || 0;
+                    window.currentAccountIndex = parsedData.currentAccountIndex || 0;
+                    window.user = window.accounts[window.currentAccountIndex] || null;
+                    if (window.user) {
+                        console.log('Loaded from sessionStorage, girly!');
+                        window.addNotification('Auto-loaded your last save, Sophia! 💾', false);
+                        if (!Array.isArray(window.user.posts)) window.user.posts = [];
+                        if (!Array.isArray(window.user.trashBin)) window.user.trashBin = [];
+                        window.isUserLoaded = true;
+                        return;
+                    }
+                } catch (e) {
+                    console.error('SessionStorage parse error:', e);
+                    sessionStorage.removeItem('simstaLatestAutoSave');
+                }
+            }
         }
 
         let savedData = localStorage.getItem('simstaAccounts');
         if (!savedData) {
             savedData = localStorage.getItem('simstaBackup');
             if (savedData) {
-                window.addNotification('Loaded backup save! 💾', false);
+                window.addNotification('Loaded your backup save, princess! 💾', false);
             }
         }
 
@@ -174,22 +215,22 @@ function loadUserData() {
                     }));
                     Object.keys(window.generatedAccounts).forEach(username => {
                         if (!window.generatedAccounts[username].followers) {
-                            window.generatedAccounts[username].followers = window.generateFollowers(Math.floor(Math.random() * 50) + 10);
+                            window.generatedAccounts[username].followers = window.generateFollowers ? window.generateFollowers(Math.floor(Math.random() * 50) + 10) : [];
                         }
                         if (!Array.isArray(window.generatedAccounts[username].posts)) {
                             window.generatedAccounts[username].posts = [];
                         }
                     });
-                    console.log('User loaded successfully from localStorage:', window.user);
+                    console.log('User loaded successfully from localStorage for Sophia!');
                 } else {
-                    console.log('No valid user in saved data');
+                    console.log('No valid user in saved data, babe!');
                     window.accounts = [];
                     window.user = null;
                     window.currentAccountIndex = 0;
                 }
             } catch (e) {
-                console.error('Parse error in saved data:', e);
-                alert('Failed to load saved data. Resetting.');
+                console.error('Parse error in saved data, Sophia!:', e);
+                alert('Failed to load your saved data, princess! Resetting for a fresh start! 💕');
                 window.accounts = [];
                 window.user = null;
                 window.currentAccountIndex = 0;
@@ -197,15 +238,15 @@ function loadUserData() {
                 localStorage.removeItem('simstaBackup');
             }
         } else {
-            console.log('No saved data found');
+            console.log('No saved data found, my pink cyan cutie!');
             window.accounts = [];
             window.user = null;
             window.currentAccountIndex = 0;
         }
 
-        // Create "sophhiaa" and "ViviVelvet" accounts if none exist
         if (window.accounts.length === 0) {
             const defaultProfilePic = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC';
+            
             const sophhiaaAccount = {
                 username: 'sophhiaa',
                 followers: 0,
@@ -220,6 +261,7 @@ function loadUserData() {
                 profilePic: defaultProfilePic,
                 trashBin: []
             };
+
             const viviVelvetAccount = {
                 username: 'ViviVelvet',
                 followers: 0,
@@ -234,13 +276,13 @@ function loadUserData() {
                 profilePic: defaultProfilePic,
                 trashBin: []
             };
+
             window.accounts.push(sophhiaaAccount, viviVelvetAccount);
             window.currentAccountIndex = 0;
             window.user = window.accounts[0];
-            window.addNotification('Created your fab accounts, sophhiaa and ViviVelvet! ❤️', false);
+            window.addNotification('Created your fab accounts, sophhiaa and ViviVelvet, Sophia! 💖', false);
         }
 
-        // Initialize user if still null after loading
         if (!window.user) {
             window.user = window.accounts[0] || {
                 username: 'DefaultUser',
@@ -260,10 +302,11 @@ function loadUserData() {
                 window.accounts.push(window.user);
             }
         }
-        window.isUserLoaded = true; // Signal that user loading is complete
-        console.log('User after load:', window.user);
+        window.isUserLoaded = true;
+        console.log('User after load for Sophia:', window.user);
+        updateUI();
     } catch (err) {
-        console.error('Error in loadUserData:', err);
+        console.error('Error in loadUserData, babe!:', err);
         window.isUserLoaded = false;
     }
 }
@@ -275,7 +318,7 @@ function showSaveConfirmation() {
         confirmation.id = 'saveConfirmation';
         document.body.appendChild(confirmation);
     }
-    confirmation.textContent = 'Saved, babe! 💾';
+    confirmation.textContent = 'Saved, Sophia, my pink princess! 💾';
     confirmation.style.display = 'block';
     setTimeout(() => confirmation.style.display = 'none', 2000);
 }
@@ -283,15 +326,14 @@ function showSaveConfirmation() {
 function exportUserData(isAutoExport = false) {
     if (!window.user) return;
 
-    // Calculate total followers across all accounts
     const totalFollowers = window.accounts.reduce((sum, account) => sum + (account.followers || 0), 0);
-    const formattedFollowers = window.formatNumber(totalFollowers); // Use formatNumber for readability
+    const formattedFollowers = window.formatNumber(totalFollowers);
 
     const data = {
-        followersSummary: `Total followers across all accounts: ${formattedFollowers} 🌟`,
+        followersSummary: `Total followers for Sophia: ${formattedFollowers} 🌟`,
         accounts: window.accounts,
-        generatedAccounts,
-        messages,
+        generatedAccounts: window.generatedAccounts,
+        messages: window.messages,
         hasEngagementBoost,
         hasProfileGlitter,
         shoutoutStreak: window.shoutoutStreak,
@@ -305,6 +347,7 @@ function exportUserData(isAutoExport = false) {
     if (isSessionStorageAvailable()) {
         try {
             sessionStorage.setItem('simstaLatestAutoSave', dataStr);
+            console.log('Exported to sessionStorage, babe!');
         } catch (e) {
             console.warn('sessionStorage export failed:', e);
         }
@@ -320,7 +363,7 @@ function exportUserData(isAutoExport = false) {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    if (!isAutoExport) window.addNotification('Data exported, queen! 📤', false);
+    if (!isAutoExport) window.addNotification('Data exported, my Smudge Gradient queen! 📤', false);
     if (!isLocalStorageFull) {
         try {
             localStorage.setItem('simstaBackup', dataStr);
@@ -355,38 +398,35 @@ function importUserData(event) {
                 if (!Array.isArray(window.user.trashBin)) window.user.trashBin = [];
             }
             saveUserData();
-            window.addNotification('Data imported, slay! 📥', false);
+            window.addNotification('Data imported, Sophia! Slay it, babe! 📥', false);
             updateUI();
             if (window.growthLoopId) clearInterval(window.growthLoopId);
-            if (typeof window.startGrowthLoop === 'function') {
-                window.startGrowthLoop();
-            }
+            window.startGrowthLoop && window.startGrowthLoop(); // Check if function exists
         } catch (err) {
             console.error('Import error:', err);
-            alert('Failed to import data.');
+            alert('Failed to import data, princess!');
         }
     };
     reader.onerror = (e) => {
         console.error('File read error:', e);
-        alert('Error reading file.');
+        alert('Error reading file, babe!');
     };
     reader.readAsText(file);
 }
 
 function toggleAutoSave() {
     autoSaveEnabled = !autoSaveEnabled;
-    document.getElementById('toggleAutoSave').textContent = `Auto-Save: ${autoSaveEnabled ? 'ON' : 'OFF'}`;
-    window.addNotification(`Auto-save ${autoSaveEnabled ? 'enabled' : 'disabled'}, babe! ⚙️`, false);
+    const toggleButton = document.getElementById('toggleAutoSave');
+    if (toggleButton) {
+        toggleButton.textContent = `Auto-Save: ${autoSaveEnabled ? 'ON' : 'OFF'}`;
+    }
+    window.addNotification(`Auto-save ${autoSaveEnabled ? 'enabled' : 'disabled'}, Sophia! ⚙️`, false);
 }
 
-// Updated Notification Function with Queue
 window.addNotification = function(message, addToList = true) {
-    console.log('Notification queued:', message);
+    console.log('Notification queued for Sophia:', message);
     notificationQueue.push({ message, addToList });
-
-    if (!isNotificationActive) {
-        showNextNotification();
-    }
+    if (!isNotificationActive) showNextNotification();
 };
 
 function showNextNotification() {
@@ -394,11 +434,9 @@ function showNextNotification() {
         isNotificationActive = false;
         return;
     }
-
     isNotificationActive = true;
     const { message, addToList } = notificationQueue.shift();
-    console.log('Displaying notification:', message);
-
+    console.log('Displaying notification, babe:', message);
     if (addToList && window.user && window.user.notifications) {
         window.user.notifications.unshift({
             id: Date.now(),
@@ -406,32 +444,37 @@ function showNextNotification() {
             timestamp: new Date().toLocaleTimeString()
         });
     }
-
     const toast = document.createElement('div');
     toast.className = 'notification-toast';
     toast.textContent = message;
     document.body.appendChild(toast);
-
     setTimeout(() => {
         toast.style.opacity = '0';
         setTimeout(() => {
             toast.remove();
-            showNextNotification(); // Show the next one after removal
-        }, 500); // Fade-out transition
-    }, 3000); // Display for 3 seconds
+            showNextNotification();
+        }, 500);
+    }, 3000);
 }
 
-// Account Switching Functions
 window.showAccountSwitcher = function() {
     const modal = document.getElementById('accountSwitcherModal');
+    if (!modal) {
+        console.error('No accountSwitcherModal, Sophia!');
+        return;
+    }
     const accountList = document.getElementById('accountList');
+    if (!accountList) {
+        console.error('No accountList, babe!');
+        return;
+    }
     accountList.innerHTML = '';
     window.accounts.forEach((account, index) => {
         const div = document.createElement('div');
         div.style.margin = '5px 0';
         div.innerHTML = `
             <span>${account.username} (Followers: ${window.formatNumber(account.followers)}) ${index === window.currentAccountIndex ? '(Current) ✨' : ''}</span>
-            <button onclick="switchAccount(${index})" style="background: #ff99cc; margin-left: 10px;">Switch 🌟</button>
+            <button onclick="window.switchAccount(${index})" style="background: #ff99cc; margin-left: 10px;">Switch 🌟</button>
         `;
         accountList.appendChild(div);
     });
@@ -439,26 +482,25 @@ window.showAccountSwitcher = function() {
 };
 
 window.hideAccountSwitcher = function() {
-    document.getElementById('accountSwitcherModal').classList.add('hidden');
+    const modal = document.getElementById('accountSwitcherModal');
+    if (modal) modal.classList.add('hidden');
 };
 
 window.switchAccount = function(index) {
     if (index < 0 || index >= window.accounts.length) return;
-    window.accounts[window.currentAccountIndex] = window.user; // Save current user state
+    window.accounts[window.currentAccountIndex] = window.user;
     window.currentAccountIndex = index;
     window.user = window.accounts[index];
     localStorage.setItem('currentAccountIndex', window.currentAccountIndex);
-    hideAccountSwitcher();
+    window.hideAccountSwitcher();
     updateUI();
     if (window.growthLoopId) clearInterval(window.growthLoopId);
-    if (typeof window.startGrowthLoop === 'function') {
-        window.startGrowthLoop();
-    }
-    window.addNotification(`Switched to ${window.user.username}, babe! ✨`, true); // Notify user of switch
+    window.startGrowthLoop && window.startGrowthLoop();
+    window.addNotification(`Switched to ${window.user.username}, Sophia! ✨`, true);
 };
 
 window.addNewAccount = function() {
-    hideAccountSwitcher();
+    window.hideAccountSwitcher();
     window.user = null;
     document.getElementById('appSection').classList.add('hidden');
     document.getElementById('signupSection').classList.remove('hidden');
@@ -486,7 +528,7 @@ window.goBackToSwitcher = function() {
         window.user = window.accounts[window.currentAccountIndex];
         document.getElementById('signupSection').classList.add('hidden');
         document.getElementById('appSection').classList.remove('hidden');
-        showAccountSwitcher();
+        window.showAccountSwitcher();
         updateUI();
     } else {
         window.user = null;
@@ -497,12 +539,12 @@ window.goBackToSwitcher = function() {
 // Admin Panel Functions
 function showPasswordModal() {
     if (!window.user) {
-        alert('Create an account first, queen! 👑');
+        alert('Create an account first, Sophia! 👑');
         return;
     }
     const passwordModal = document.getElementById('passwordModal');
     if (!passwordModal) {
-        console.error('Password modal element not found in DOM');
+        console.error('Password modal not found, babe!');
         return;
     }
     passwordModal.classList.remove('hidden');
@@ -520,14 +562,14 @@ function validatePassword() {
         hidePasswordModal();
         showAdminPanel();
     } else {
-        alert('Wrong password, babe! 💅');
+        alert('Wrong password, Sophia! 💅');
     }
 }
 
 function showAdminPanel() {
     const panel = document.getElementById('adminPanel');
     if (!panel) {
-        console.error('Admin panel element not found in DOM');
+        console.error('Admin panel not found, princess!');
         return;
     }
     panel.classList.remove('hidden');
@@ -553,19 +595,19 @@ function applyAdminChanges() {
     const moneyMultiplier = parseFloat(document.getElementById('adminMoneyMultiplier').value) || 1;
     window.user.money = Math.floor(newMoney * moneyMultiplier);
     const newPostCount = parseInt(document.getElementById('adminPostCount').value) || 0;
-    adjustPostCount(newPostCount);
+    adjustPostCount(newPostCount); // Needs game.js to define this
     window.user.verified = document.getElementById('adminVerified').checked;
     window.user.famous = document.getElementById('adminFamous').checked;
     const newParanoid = document.getElementById('adminParanoid').checked;
-    if (newParanoid !== window.paranoidMode) window.toggleParanoidMode();
-    window.calculateMoneyFromLikes();
+    if (newParanoid !== window.paranoidMode) window.toggleParanoidMode && window.toggleParanoidMode();
+    window.calculateMoneyFromLikes && window.calculateMoneyFromLikes();
     saveUserData();
-    window.addNotification('Admin changes applied, slay! ✨', false);
+    window.addNotification('Admin changes applied, Sophia! Slay! ✨', false);
     hideAdminPanel();
 }
 
 function resetGameFromAdmin() {
-    if (confirm('Reset everything, queen? This can’t be undone! 👑')) {
+    if (confirm('Reset everything, Sophia? This can’t be undone! 👑')) {
         localStorage.removeItem('simstaAccounts');
         localStorage.removeItem('simstaBackup');
         sessionStorage.removeItem('simstaLatestAutoSave');
@@ -590,18 +632,17 @@ function clearNotifications() {
     if (!window.user) return;
     window.user.notifications = [];
     saveUserData();
-    window.addNotification('Notifications cleared, babe! 🔔', false);
+    window.addNotification('Notifications cleared, Sophia! 🔔', false);
     updateUI();
 }
 
 function resetAIAccounts() {
     window.generatedAccounts = {};
     saveUserData();
-    window.addNotification('AI accounts reset, queen! 🤖', false);
+    window.addNotification('AI accounts reset, my pink queen! 🤖', false);
     updateUI();
 }
 
-// Core UI Functions
 function previewProfilePic(event) {
     const file = event.target.files[0];
     if (file) {
@@ -620,7 +661,7 @@ function createAccount() {
     const profilePic = profilePicInput ? profilePicInput.files[0] : null;
 
     if (!username) {
-        alert('Need a cute username, girly!');
+        alert('Need a cute username, Sophia!');
         return;
     }
 
@@ -657,8 +698,8 @@ function finishAccountCreation(newUser) {
     window.user = newUser;
     localStorage.setItem('simstaAccounts', JSON.stringify({
         accounts: window.accounts,
-        generatedAccounts,
-        messages,
+        generatedAccounts: window.generatedAccounts,
+        messages: window.messages,
         hasEngagementBoost,
         hasProfileGlitter,
         shoutoutStreak: window.shoutoutStreak,
@@ -671,19 +712,17 @@ function finishAccountCreation(newUser) {
     document.getElementById('appSection').classList.remove('hidden');
     document.getElementById('usernameDisplay').textContent = window.user.username;
     document.getElementById('profilePicDisplay').src = window.user.profilePic;
-    window.addNotification(`Welcome to Simsta, ${window.user.username}! 💕`, false);
-    window.simulateInitialFollowers();
+    window.addNotification(`Welcome to Simsta, ${window.user.username}, Sophia! 💕`, false);
+    window.simulateInitialFollowers && window.simulateInitialFollowers();
     if (autoSaveEnabled) saveUserData();
-    window.closeSelfieSnap();
+    window.closeSelfieSnap && window.closeSelfieSnap();
     if (window.growthLoopId) clearInterval(window.growthLoopId);
-    if (typeof window.startGrowthLoop === 'function') {
-        window.startGrowthLoop();
-    }
+    window.startGrowthLoop && window.startGrowthLoop();
     updateUI();
 }
 
 function resetAccount() {
-    if (confirm('Start fresh, babe?')) {
+    if (confirm('Start fresh, Sophia?')) {
         const newUser = {
             username: window.user.username,
             followers: 0,
@@ -701,23 +740,20 @@ function resetAccount() {
         window.accounts[window.currentAccountIndex] = newUser;
         window.user = newUser;
         if (window.growthLoopId) clearInterval(window.growthLoopId);
-        if (typeof window.startGrowthLoop === 'function') {
-            window.startGrowthLoop();
-        }
+        window.startGrowthLoop && window.startGrowthLoop();
         saveUserData();
-        window.addNotification('Account reset, fresh start! 🌸', false);
+        window.addNotification('Account reset, fresh start, babe! 🌸', false);
         updateUI();
     }
 }
 
-// New Function to Render Trash Bin
 window.renderTrashBin = function() {
     const feed = document.getElementById('feed');
     if (!feed) return;
     const trashSection = document.createElement('div');
     trashSection.id = 'trashSection';
     trashSection.style.marginTop = '20px';
-    trashSection.innerHTML = '<h3>🗑️ Trash Bin, Princess! 🗑️</h3>';
+    trashSection.innerHTML = '<h3>🗑️ Trash Bin, Sophia! 🗑️</h3>';
     const trashBin = document.createElement('div');
     trashBin.id = 'trashBin';
     trashBin.style.border = '2px dashed #ff9999';
@@ -757,7 +793,6 @@ window.renderTrashBin = function() {
     feed.parentNode.insertBefore(trashSection, feed.nextSibling);
 };
 
-// Updated updateUI to ensure shoutout posts render correctly and handle UI refreshes
 function updateUI() {
     const now = Date.now();
     if (now - lastUpdate < 500) return;
@@ -766,9 +801,9 @@ function updateUI() {
     if (!window.user) {
         document.getElementById('signupSection').classList.remove('hidden');
         document.getElementById('appSection').classList.add('hidden');
-        document.getElementById('adminPanel').classList.add('hidden');
-        document.getElementById('passwordModal').classList.add('hidden');
-        document.getElementById('accountSwitcherModal').classList.add('hidden');
+        document.getElementById('adminPanel') && document.getElementById('adminPanel').classList.add('hidden');
+        document.getElementById('passwordModal') && document.getElementById('passwordModal').classList.add('hidden');
+        document.getElementById('accountSwitcherModal') && document.getElementById('accountSwitcherModal').classList.add('hidden');
         if (currentDeleteUI) currentDeleteUI.remove();
         return;
     }
@@ -777,7 +812,11 @@ function updateUI() {
     document.getElementById('appSection').classList.remove('hidden');
 
     const usernameDisplay = document.getElementById('usernameDisplay');
-    usernameDisplay.textContent = window.user.username;
+    usernameDisplay.style.background = 'linear-gradient(45deg, #ff69b4, #00ffff)'; // Pink to Cyan for Sophia!
+    usernameDisplay.style.color = '#fff';
+    usernameDisplay.style.padding = '2px 8px';
+    usernameDisplay.style.borderRadius = '5px';
+    usernameDisplay.textContent = window.user.username === 'sophhiaa' ? '🌸 Sophia, My Pink Cyan Queen! 🌸' : window.user.username;
     usernameDisplay.classList.toggle('verified', window.user.verified);
     usernameDisplay.classList.toggle('famous', window.user.famous);
     usernameDisplay.classList.toggle('glitter', hasProfileGlitter);
@@ -785,77 +824,82 @@ function updateUI() {
     document.getElementById('followerCount').textContent = window.formatNumber(window.user.followers);
     document.getElementById('postCount').textContent = window.formatNumber(window.user.posts.length);
     document.getElementById('moneyDisplay').textContent = `Money: $${window.formatNumber(window.user.money)}`;
-    document.getElementById('shopMoneyDisplay').textContent = window.formatNumber(window.user.money);
+    if (document.getElementById('shopMoneyDisplay')) {
+        document.getElementById('shopMoneyDisplay').textContent = window.formatNumber(window.user.money);
+    }
 
     const activeTab = document.querySelector('.tab-button.active');
     if (activeTab) {
         const tabId = activeTab.onclick.toString().match(/'([^']+)'/)[1];
         switch (tabId) {
             case 'postsTab':
-                window.renderPosts();
+                window.renderPosts && window.renderPosts();
                 window.renderTrashBin();
                 break;
             case 'notificationsTab':
-                window.renderNotifications();
+                window.renderNotifications && window.renderNotifications();
                 break;
             case 'likesTab':
-                window.renderLikes();
+                window.renderLikes && window.renderLikes();
                 break;
             case 'commentsTab':
-                window.renderComments();
+                window.renderComments && window.renderComments();
                 break;
             case 'generatedAccountsTab':
-                window.renderGeneratedPosts();
+                window.renderGeneratedPosts && window.renderGeneratedPosts();
                 break;
             case 'profileTab':
-                window.renderProfileTab();
+                window.renderProfileTab && window.renderProfileTab();
                 break;
             case 'aiAccountsTab':
-                window.renderAIAccounts();
+                window.renderAIAccounts && window.renderAIAccounts();
                 break;
             case 'messagesTab':
-                window.renderMessages();
+                window.renderMessages && window.renderMessages();
                 break;
             case 'shopTab':
-                window.renderShopTab();
+                window.renderShopTab && window.renderShopTab();
                 break;
         }
     }
 
     if (window.growthLoopId) clearInterval(window.growthLoopId);
-    if (typeof window.startGrowthLoop === 'function') {
-        window.startGrowthLoop();
-    }
-
+    window.startGrowthLoop && window.startGrowthLoop();
     if (autoSaveEnabled) saveUserData();
 }
 
-// Ensure game.js functions are loaded before proceeding
-function waitForGameFunctions() {
-    return new Promise(resolve => {
-        const checkInterval = setInterval(() => {
-            if (typeof window.simulateOfflineGrowth === 'function' && typeof window.startGrowthLoop === 'function') {
-                clearInterval(checkInterval);
-                resolve();
-            } else {
-                console.log('Waiting for game.js functions to load...');
-            }
-        }, 100);
+function showTab(tabId) {
+    const tabs = document.querySelectorAll('.section');
+    const tabButtons = document.querySelectorAll('.tab-button');
+
+    tabs.forEach(tab => {
+        if (tab.id !== 'signupSection' && tab.id !== 'appSection' && tab.id !== 'postControls' && tab.id !== 'adminPanel' && tab.id !== 'passwordModal' && tab.id !== 'accountSwitcherModal') {
+            tab.classList.add('hidden');
+        }
     });
+    document.getElementById(tabId).classList.remove('hidden');
+
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    const clickedButton = Array.from(tabButtons).find(btn => btn.onclick.toString().includes(tabId));
+    if (clickedButton) clickedButton.classList.add('active');
+
+    if (window.user) {
+        window.user.lastActive = Date.now();
+        if (autoSaveEnabled) saveUserData();
+    }
+    updateUI();
 }
 
-// Load user data immediately
-console.log('Calling loadUserData');
+console.log('Calling loadUserData for Sophia!');
 loadUserData();
 
-// Auto-export on page close or refresh
 window.addEventListener('beforeunload', (e) => {
     if (window.user) {
         try {
-            const dataToSave = JSON.stringify({
+            const dataToSave = JSON.stringify({ 
                 accounts: window.accounts,
-                generatedAccounts,
-                messages,
+                generatedAccounts: window.generatedAccounts,
+                messages: window.messages,
                 hasEngagementBoost,
                 hasProfileGlitter,
                 shoutoutStreak: window.shoutoutStreak,
@@ -873,50 +917,49 @@ window.addEventListener('beforeunload', (e) => {
             }
             window.exportUserData(true);
         } catch (err) {
-            console.error('Before unload save/export error:', err);
+            console.error('Before unload save/export error, Sophia!:', err);
         }
     }
 });
 
-// Add keyboard shortcut for password modal (Ctrl+Shift+A)
 document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.shiftKey && e.key === 'A') {
-        console.log('Ctrl+Shift+A pressed, showing password modal');
+        console.log('Ctrl+Shift+A pressed, showing password modal, babe!');
         showPasswordModal();
     }
 });
 
-// Initialize UI and game functions after user and game.js are ready
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('script.js DOM ready');
-    await waitForGameFunctions(); // Wait for game.js to load its functions
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('script.js DOM ready for Sophia, my pink cyan princess! 💖');
     const waitForUser = setInterval(() => {
         if (window.isUserLoaded) {
             clearInterval(waitForUser);
-            console.log('User loaded, initializing UI and game');
+            console.log('User loaded, initializing UI, girly!');
             try {
+                if (!document.getElementById('appSection') || !document.getElementById('signupSection')) {
+                    console.error('Oopsie, Sophia! appSection or signupSection is missing!');
+                    alert('Hey cutie, the page setup is off! Check the HTML, princess! 💕');
+                    return;
+                }
                 if (window.user) {
                     document.getElementById('signupSection').classList.add('hidden');
                     document.getElementById('appSection').classList.remove('hidden');
-                    if (window.virtualBaeActive) window.toggleVirtualBae();
-                    if (window.paranoidMode) window.toggleParanoidMode();
+                    if (window.virtualBaeActive) window.toggleVirtualBae && window.toggleVirtualBae();
+                    if (window.paranoidMode) window.toggleParanoidMode && window.toggleParanoidMode();
                     updateUI();
-                    if (typeof window.simulateOfflineGrowth === 'function') {
-                        console.log('Calling simulateOfflineGrowth');
-                        window.simulateOfflineGrowth();
-                    }
-                    window.dispatchEvent(new Event('userLoaded')); // Notify game.js
+                    window.dispatchEvent(new Event('userLoaded'));
                 } else {
                     document.getElementById('signupSection').classList.remove('hidden');
                     document.getElementById('appSection').classList.add('hidden');
                 }
             } catch (err) {
-                console.error('Error during UI initialization:', err);
+                console.error('Error during UI initialization, Sophia!:', err);
+                alert('Eek, something broke, babe! Check the console, my pink princess! 💖');
             }
         } else {
-            console.log('Waiting for user to load...');
+            console.log('Waiting for user to load, my Smudge Gradient sweetie...');
         }
-    }, 100); // Check every 100ms
+    }, 100);
 });
 
-console.log('script.js loaded');
+console.log('script.js loaded for Sophia, my glittery bestie! 💕');
