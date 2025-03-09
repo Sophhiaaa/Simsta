@@ -1,6 +1,6 @@
 console.log('script.js starting');
 
-/// Saving System Variables and Functions
+// Saving System Variables and Functions
 let autoSaveEnabled = true;
 const ADMIN_PASSWORD = "admin123";
 window.generatedAccounts = window.generatedAccounts || {};
@@ -44,6 +44,7 @@ function isSessionStorageAvailable() {
     }
 }
 
+// Enhanced saveUserData with better account handling
 function saveUserData(showConfirmation = false) {
     if (!window.user) {
         console.log('No user to save');
@@ -53,6 +54,7 @@ function saveUserData(showConfirmation = false) {
         console.error('localStorage is not available');
         return;
     }
+    // Update the current account in the accounts array
     window.accounts[window.currentAccountIndex] = window.user;
     if (saveTimeout) clearTimeout(saveTimeout);
     saveTimeout = setTimeout(() => {
@@ -67,19 +69,19 @@ function saveUserData(showConfirmation = false) {
                     famous: account.famous,
                     profilePic: account.profilePic,
                     theme: account.theme,
-                    notifications: account.notifications ? account.notifications.slice(0, 10) : [], // Limit to 10 notifications
+                    notifications: account.notifications ? account.notifications.slice(0, 10) : [],
                     sponsored: account.sponsored || false,
                     eventHosted: account.eventHosted || false,
                     lastActive: account.lastActive || Date.now(),
-                    trashBin: account.trashBin ? account.trashBin.slice(0, 10) : [] // Limit to 10 trashed posts
+                    trashBin: account.trashBin ? account.trashBin.slice(0, 10) : []
                 })),
                 generatedAccounts: Object.fromEntries(Object.entries(generatedAccounts).slice(0, 5)), // Limit to 5 generated accounts
                 messages: messages.slice(0, 10), // Limit to 10 messages
                 hasEngagementBoost,
                 hasProfileGlitter,
-                shoutoutStreak: window.shoutoutStreak,
-                lastShoutoutTime: window.lastShoutoutTime,
-                lastDailyReward: window.lastDailyReward,
+                shoutoutStreak: window.shoutoutStreak || 0,
+                lastShoutoutTime: window.lastShoutoutTime || 0,
+                lastDailyReward: window.lastDailyReward || 0,
                 currentAccountIndex: window.currentAccountIndex
             };
             const dataToSave = JSON.stringify(minimalData);
@@ -101,10 +103,7 @@ function saveUserData(showConfirmation = false) {
                 } catch (e) {
                     console.warn('localStorage save failed (possibly full):', e);
                     isLocalStorageFull = true;
-                    if (!window.storageFullNotified) {
-                        window.addNotification('Storage full! Using auto-exported files instead. 📤', false);
-                        window.storageFullNotified = true;
-                    }
+                    window.addNotification('Storage full! Using auto-exported files instead. 📤', false);
                     window.exportUserData(true); // Auto-export to file on quota exceeded
                 }
             }
@@ -188,7 +187,7 @@ function loadUserData() {
                     sponsored: window.user.sponsored || false,
                     eventHosted: window.user.eventHosted || false,
                     profilePic: window.user.profilePic || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
-                    trashBin: window.user.trashBin || [] // Ensure trashBin is loaded
+                    trashBin: window.user.trashBin || []
                 };
                 window.user.posts = window.user.posts.map(post => ({
                     likes: Number(post.likes) || 0,
@@ -409,7 +408,11 @@ function toggleAutoSave() {
 window.addNotification = function(message, addToList = true) {
     console.log('Notification:', message);
     if (addToList && window.user && window.user.notifications) {
-        window.user.notifications.unshift(message);
+        window.user.notifications.unshift({
+            id: Date.now(),
+            message: message,
+            timestamp: new Date().toLocaleTimeString()
+        });
     }
     // Show toast notification
     const toast = document.createElement('div');
@@ -430,6 +433,7 @@ window.showAccountSwitcher = function() {
         div.innerHTML = `
             <span>${account.username} (Followers: ${window.formatNumber(account.followers)}) ${index === window.currentAccountIndex ? '(Current) ✨' : ''}</span>
             <button onclick="switchAccount(${index})" style="background: #ff99cc; margin-left: 10px;">Switch 🌟</button>
+            <button onclick="deleteAccount(${index})" style="background: #ff9999; margin-left: 5px;">Delete 🗑️</button>
         `;
         accountList.appendChild(div);
     });
@@ -451,6 +455,25 @@ window.switchAccount = function(index) {
     if (window.growthLoopId) clearInterval(window.growthLoopId);
     window.startGrowthLoop();
     window.addNotification(`Switched to ${window.user.username}, babe! ✨`, true); // Notify user of switch
+};
+
+// New deleteAccount function
+window.deleteAccount = function(index) {
+    if (confirm('Are you sure you want to delete this account, babe? 💔')) {
+        window.accounts.splice(index, 1);
+        if (window.currentAccountIndex >= window.accounts.length) {
+            window.currentAccountIndex = Math.max(0, window.accounts.length - 1);
+        }
+        if (window.accounts.length === 0) {
+            window.user = null;
+            document.getElementById('signupSection').classList.remove('hidden');
+            document.getElementById('appSection').classList.add('hidden');
+        } else {
+            window.user = window.accounts[window.currentAccountIndex];
+        }
+        saveUserData();
+        showAccountSwitcher();
+    }
 };
 
 window.addNewAccount = function() {
@@ -490,140 +513,32 @@ window.goBackToSwitcher = function() {
     }
 };
 
-// Custom Delete UI Functions (Removed since we’re using trash)
-// Removed showCustomDeleteUI and related logic since we replaced the delete functionality
-
-// Admin Panel Functions
-function showPasswordModal() {
-    if (!window.user) {
-        alert('Create an account first, queen! 👑');
-        return;
-    }
-    const passwordModal = document.getElementById('passwordModal');
-    if (!passwordModal) {
-        console.error('Password modal element not found in DOM');
-        return;
-    }
-    passwordModal.classList.remove('hidden');
-    document.getElementById('adminPasswordInput').value = '';
-}
-
-function hidePasswordModal() {
-    const passwordModal = document.getElementById('passwordModal');
-    if (passwordModal) passwordModal.classList.add('hidden');
-}
-
-function validatePassword() {
-    const passwordInput = document.getElementById('adminPasswordInput').value;
-    if (passwordInput === ADMIN_PASSWORD) {
-        hidePasswordModal();
-        showAdminPanel();
-    } else {
-        alert('Wrong password, babe! 💅');
-    }
-}
-
-function showAdminPanel() {
-    const panel = document.getElementById('adminPanel');
-    if (!panel) {
-        console.error('Admin panel element not found in DOM');
-        return;
-    }
-    panel.classList.remove('hidden');
-    document.getElementById('adminFollowers').value = window.user.followers || 0;
-    document.getElementById('adminMoney').value = window.user.money || 0;
-    document.getElementById('adminMoneyMultiplier').value = 1;
-    document.getElementById('adminPostCount').value = window.user.posts.length || 0;
-    document.getElementById('adminVerified').checked = window.user.verified || false;
-    document.getElementById('adminFamous').checked = window.user.famous || false;
-    document.getElementById('adminParanoid').checked = window.paranoidMode || false;
-}
-
-function hideAdminPanel() {
-    const panel = document.getElementById('adminPanel');
-    if (panel) panel.classList.add('hidden');
-    updateUI();
-}
-
-function applyAdminChanges() {
-    if (!window.user) return;
-    window.user.followers = parseInt(document.getElementById('adminFollowers').value) || 0;
-    const newMoney = parseInt(document.getElementById('adminMoney').value) || 0;
-    const moneyMultiplier = parseFloat(document.getElementById('adminMoneyMultiplier').value) || 1;
-    window.user.money = Math.floor(newMoney * moneyMultiplier);
-    const newPostCount = parseInt(document.getElementById('adminPostCount').value) || 0;
-    adjustPostCount(newPostCount);
-    window.user.verified = document.getElementById('adminVerified').checked;
-    window.user.famous = document.getElementById('adminFamous').checked;
-    const newParanoid = document.getElementById('adminParanoid').checked;
-    if (newParanoid !== window.paranoidMode) window.toggleParanoidMode();
-    window.calculateMoneyFromLikes();
-    saveUserData();
-    window.addNotification('Admin changes applied, slay! ✨', false);
-    hideAdminPanel();
-}
-
-function resetGameFromAdmin() {
-    if (confirm('Reset everything, queen? This can’t be undone! 👑')) {
-        localStorage.removeItem('simstaAccounts');
-        localStorage.removeItem('simstaBackup');
-        sessionStorage.removeItem('simstaLatestAutoSave');
-        clearInterval(window.growthLoopId);
-        window.accounts = [];
-        window.user = null;
-        window.currentAccountIndex = 0;
-        generatedAccounts = {};
-        messages = [];
-        hasEngagementBoost = false;
-        hasProfileGlitter = false;
-        latestAutoSave = null;
-        isLocalStorageFull = false;
-        window.storageFullNotified = false;
-        saveUserData();
-        hideAdminPanel();
-        location.reload();
-    }
-}
-
-function clearNotifications() {
-    if (!window.user) return;
-    window.user.notifications = [];
-    saveUserData();
-    window.addNotification('Notifications cleared, babe! 🔔', false);
-    updateUI();
-}
-
-function resetAIAccounts() {
-    generatedAccounts = {};
-    saveUserData();
-    window.addNotification('AI accounts reset, queen! 🤖', false);
-    updateUI();
-}
-
-// Core UI Functions
-function previewProfilePic(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            document.getElementById('profilePicPreview').src = e.target.result;
-            document.getElementById('profilePicPreview').classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-function createAccount() {
-    const username = document.getElementById('username').value.trim();
+// Enhanced createAccount with unique ID
+window.createAccount = function() {
+    const usernameInput = document.getElementById('username');
+    const username = usernameInput ? usernameInput.value.trim() : '';
     const profilePicInput = document.getElementById('profilePicInput');
     const profilePic = profilePicInput ? profilePicInput.files[0] : null;
+
+    if (!usernameInput) {
+        console.error('Username input element not found! Check ID "username" in HTML.');
+        alert('Oops! Something broke. Please tell Sophia to check the username field.');
+        return;
+    }
 
     if (!username) {
         alert('Need a cute username, girly!');
         return;
     }
 
+    // Check for duplicate usernames
+    if (window.accounts.some(account => account.username.toLowerCase() === username.toLowerCase())) {
+        alert('Oops! That username is taken, pick another one, princess! 💕');
+        return;
+    }
+
     const newUser = {
+        id: username + '_' + Date.now(), // Unique ID based on username and timestamp
         username: username,
         followers: 0,
         posts: [],
@@ -644,11 +559,34 @@ function createAccount() {
             newUser.profilePic = e.target.result;
             finishAccountCreation(newUser);
         };
+        reader.onerror = (e) => {
+            console.error('Error reading profile picture:', e);
+            alert('Oops! Couldn’t read your profile picture. Using default instead.');
+            finishAccountCreation(newUser);
+        };
         reader.readAsDataURL(profilePic);
     } else {
+        if (profilePic) {
+            console.warn('Profile picture too large (> 1MB), using default.');
+        }
         finishAccountCreation(newUser);
     }
-}
+};
+
+window.previewProfilePic = function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('profilePicPreview').src = e.target.result;
+            document.getElementById('profilePicPreview').classList.remove('hidden');
+        };
+        reader.onerror = (e) => {
+            console.error('Error reading profile picture for preview:', e);
+        };
+        reader.readAsDataURL(file);
+    }
+};
 
 function finishAccountCreation(newUser) {
     window.accounts.push(newUser);
