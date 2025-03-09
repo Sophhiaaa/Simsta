@@ -65,19 +65,19 @@ function saveUserData(showConfirmation = false) {
                     username: account.username,
                     followers: account.followers,
                     money: account.money,
-                    posts: account.posts.slice(0, 20), // Limit to 20 posts to reduce size
+                    posts: account.posts.slice(0, 20), // Limit to 20 posts
                     verified: account.verified,
                     famous: account.famous,
                     profilePic: account.profilePic,
                     theme: account.theme,
-                    notifications: account.notifications ? account.notifications.slice(0, 10) : [], // Limit to 10 notifications
+                    notifications: account.notifications ? account.notifications.slice(0, 10) : [],
                     sponsored: account.sponsored || false,
                     eventHosted: account.eventHosted || false,
                     lastActive: account.lastActive || Date.now(),
-                    trashBin: account.trashBin ? account.trashBin.slice(0, 10) : [] // Limit to 10 trashed posts
+                    trashBin: account.trashBin ? account.trashBin.slice(0, 10) : []
                 })),
-                generatedAccounts: Object.fromEntries(Object.entries(generatedAccounts).slice(0, 5)), // Limit to 5 generated accounts
-                messages: messages.slice(0, 10), // Limit to 10 messages
+                generatedAccounts: Object.fromEntries(Object.entries(generatedAccounts).slice(0, 5)),
+                messages: messages.slice(0, 10),
                 hasEngagementBoost,
                 hasProfileGlitter,
                 shoutoutStreak: window.shoutoutStreak,
@@ -87,11 +87,10 @@ function saveUserData(showConfirmation = false) {
             };
             const dataToSave = JSON.stringify(minimalData);
             latestAutoSave = dataToSave;
-            console.log('latestAutoSave set, length:', dataToSave.length);
+            console.log('Saved data, length:', dataToSave.length);
             if (isSessionStorageAvailable()) {
                 try {
                     sessionStorage.setItem('simstaLatestAutoSave', dataToSave);
-                    console.log('Saved to sessionStorage');
                 } catch (e) {
                     console.warn('sessionStorage save failed:', e);
                 }
@@ -100,7 +99,6 @@ function saveUserData(showConfirmation = false) {
                 try {
                     localStorage.setItem('simstaAccounts', dataToSave);
                     localStorage.setItem('simstaBackup', dataToSave);
-                    console.log('Saved to localStorage');
                 } catch (e) {
                     console.warn('localStorage save failed (possibly full):', e);
                     isLocalStorageFull = true;
@@ -125,37 +123,6 @@ function loadUserData() {
             console.error('localStorage is not available');
             alert('Your browser does not support localStorage.');
             return;
-        }
-
-        if (isSessionStorageAvailable()) {
-            const sessionData = sessionStorage.getItem('simstaLatestAutoSave');
-            if (sessionData) {
-                try {
-                    const parsedData = JSON.parse(sessionData);
-                    window.accounts = parsedData.accounts || [];
-                    window.generatedAccounts = parsedData.generatedAccounts || {};
-                    window.messages = parsedData.messages || [];
-                    hasEngagementBoost = parsedData.hasEngagementBoost || false;
-                    hasProfileGlitter = parsedData.hasProfileGlitter || false;
-                    window.shoutoutStreak = parsedData.shoutoutStreak || 0;
-                    window.lastShoutoutTime = parsedData.lastShoutoutTime || 0;
-                    window.lastDailyReward = parsedData.lastDailyReward || 0;
-                    window.currentAccountIndex = parsedData.currentAccountIndex || 0;
-                    window.user = window.accounts[window.currentAccountIndex] || null;
-                    if (window.user) {
-                        console.log('Loaded from sessionStorage');
-                        window.addNotification('Auto-loaded last save from session! 💾', false);
-                        // Ensure posts and trashBin are properly initialized
-                        if (!Array.isArray(window.user.posts)) window.user.posts = [];
-                        if (!Array.isArray(window.user.trashBin)) window.user.trashBin = [];
-                        window.isUserLoaded = true; // Signal user is loaded
-                        return;
-                    }
-                } catch (e) {
-                    console.error('SessionStorage parse error:', e);
-                    sessionStorage.removeItem('simstaLatestAutoSave');
-                }
-            }
         }
 
         let savedData = localStorage.getItem('simstaAccounts');
@@ -205,15 +172,15 @@ function loadUserData() {
                         hashtags: Array.isArray(post.hashtags) ? post.hashtags : [],
                         imageData: post.imageData || ''
                     }));
-                    Object.keys(generatedAccounts).forEach(username => {
-                        if (!generatedAccounts[username].followers) {
-                            generatedAccounts[username].followers = window.generateFollowers(Math.floor(Math.random() * 50) + 10);
+                    Object.keys(window.generatedAccounts).forEach(username => {
+                        if (!window.generatedAccounts[username].followers) {
+                            window.generatedAccounts[username].followers = window.generateFollowers(Math.floor(Math.random() * 50) + 10);
                         }
-                        if (!Array.isArray(generatedAccounts[username].posts)) {
-                            generatedAccounts[username].posts = [];
+                        if (!Array.isArray(window.generatedAccounts[username].posts)) {
+                            window.generatedAccounts[username].posts = [];
                         }
                     });
-                    console.log('User loaded successfully from localStorage');
+                    console.log('User loaded successfully from localStorage:', window.user);
                 } else {
                     console.log('No valid user in saved data');
                     window.accounts = [];
@@ -239,7 +206,6 @@ function loadUserData() {
         // Create "sophhiaa" and "ViviVelvet" accounts if none exist
         if (window.accounts.length === 0) {
             const defaultProfilePic = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC';
-            
             const sophhiaaAccount = {
                 username: 'sophhiaa',
                 followers: 0,
@@ -254,7 +220,6 @@ function loadUserData() {
                 profilePic: defaultProfilePic,
                 trashBin: []
             };
-
             const viviVelvetAccount = {
                 username: 'ViviVelvet',
                 followers: 0,
@@ -269,11 +234,10 @@ function loadUserData() {
                 profilePic: defaultProfilePic,
                 trashBin: []
             };
-
             window.accounts.push(sophhiaaAccount, viviVelvetAccount);
-            window.currentAccountIndex = 0; // Default to "sophhiaa" as the active account
+            window.currentAccountIndex = 0;
             window.user = window.accounts[0];
-            window.addNotification('Created your fab accounts, sophhiaa and ViviVelvet! 💖', false);
+            window.addNotification('Created your fab accounts, sophhiaa and ViviVelvet! ❤️', false);
         }
 
         // Initialize user if still null after loading
@@ -298,7 +262,6 @@ function loadUserData() {
         }
         window.isUserLoaded = true; // Signal that user loading is complete
         console.log('User after load:', window.user);
-        updateUI();
     } catch (err) {
         console.error('Error in loadUserData:', err);
         window.isUserLoaded = false;
@@ -322,7 +285,7 @@ function exportUserData(isAutoExport = false) {
 
     // Calculate total followers across all accounts
     const totalFollowers = window.accounts.reduce((sum, account) => sum + (account.followers || 0), 0);
-    const formattedFollowers = window.formatNumber(totalFollowers); // Use formatNumber for readability (e.g., "3.5K")
+    const formattedFollowers = window.formatNumber(totalFollowers); // Use formatNumber for readability
 
     const data = {
         followersSummary: `Total followers across all accounts: ${formattedFollowers} 🌟`,
@@ -342,7 +305,6 @@ function exportUserData(isAutoExport = false) {
     if (isSessionStorageAvailable()) {
         try {
             sessionStorage.setItem('simstaLatestAutoSave', dataStr);
-            console.log('Exported to sessionStorage');
         } catch (e) {
             console.warn('sessionStorage export failed:', e);
         }
@@ -351,7 +313,6 @@ function exportUserData(isAutoExport = false) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    // Shortened filename with just username and followers
     link.download = isAutoExport 
         ? `simsta_${window.user.username}_auto_${formattedFollowers}.json` 
         : `simsta_${window.user.username}_${formattedFollowers}.json`;
@@ -391,13 +352,15 @@ function importUserData(event) {
             if (window.user) {
                 if (!Array.isArray(window.user.posts)) window.user.posts = [];
                 if (!Array.isArray(window.user.notifications)) window.user.notifications = [];
-                if (!Array.isArray(window.user.trashBin)) window.user.trashBin = []; // Ensure trashBin exists
+                if (!Array.isArray(window.user.trashBin)) window.user.trashBin = [];
             }
             saveUserData();
             window.addNotification('Data imported, slay! 📥', false);
             updateUI();
             if (window.growthLoopId) clearInterval(window.growthLoopId);
-            window.startGrowthLoop();
+            if (typeof window.startGrowthLoop === 'function') {
+                window.startGrowthLoop();
+            }
         } catch (err) {
             console.error('Import error:', err);
             alert('Failed to import data.');
@@ -488,7 +451,9 @@ window.switchAccount = function(index) {
     hideAccountSwitcher();
     updateUI();
     if (window.growthLoopId) clearInterval(window.growthLoopId);
-    window.startGrowthLoop();
+    if (typeof window.startGrowthLoop === 'function') {
+        window.startGrowthLoop();
+    }
     window.addNotification(`Switched to ${window.user.username}, babe! ✨`, true); // Notify user of switch
 };
 
@@ -608,8 +573,8 @@ function resetGameFromAdmin() {
         window.accounts = [];
         window.user = null;
         window.currentAccountIndex = 0;
-        generatedAccounts = {};
-        messages = [];
+        window.generatedAccounts = {};
+        window.messages = [];
         hasEngagementBoost = false;
         hasProfileGlitter = false;
         latestAutoSave = null;
@@ -630,7 +595,7 @@ function clearNotifications() {
 }
 
 function resetAIAccounts() {
-    generatedAccounts = {};
+    window.generatedAccounts = {};
     saveUserData();
     window.addNotification('AI accounts reset, queen! 🤖', false);
     updateUI();
@@ -671,7 +636,7 @@ function createAccount() {
         eventHosted: false,
         profilePic: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
         money: 0,
-        trashBin: [] // Initialize trashBin for new accounts
+        trashBin: []
     };
 
     if (profilePic && profilePic.size <= 1 * 1024 * 1024) {
@@ -711,7 +676,9 @@ function finishAccountCreation(newUser) {
     if (autoSaveEnabled) saveUserData();
     window.closeSelfieSnap();
     if (window.growthLoopId) clearInterval(window.growthLoopId);
-    window.startGrowthLoop();
+    if (typeof window.startGrowthLoop === 'function') {
+        window.startGrowthLoop();
+    }
     updateUI();
 }
 
@@ -729,12 +696,14 @@ function resetAccount() {
             eventHosted: false,
             profilePic: window.user.profilePic,
             money: 0,
-            trashBin: [] // Initialize trashBin for reset accounts
+            trashBin: []
         };
         window.accounts[window.currentAccountIndex] = newUser;
         window.user = newUser;
         if (window.growthLoopId) clearInterval(window.growthLoopId);
-        window.startGrowthLoop();
+        if (typeof window.startGrowthLoop === 'function') {
+            window.startGrowthLoop();
+        }
         saveUserData();
         window.addNotification('Account reset, fresh start! 🌸', false);
         updateUI();
@@ -783,7 +752,6 @@ window.renderTrashBin = function() {
         trashBin.innerHTML = '<p>No trashed posts yet, babe! 🌸</p>';
     }
     trashSection.appendChild(trashBin);
-    // Remove existing trash section if it exists
     const existingTrash = document.getElementById('trashSection');
     if (existingTrash) existingTrash.remove();
     feed.parentNode.insertBefore(trashSection, feed.nextSibling);
@@ -801,7 +769,7 @@ function updateUI() {
         document.getElementById('adminPanel').classList.add('hidden');
         document.getElementById('passwordModal').classList.add('hidden');
         document.getElementById('accountSwitcherModal').classList.add('hidden');
-        if (currentDeleteUI) currentDeleteUI.remove(); // Clean up custom UI
+        if (currentDeleteUI) currentDeleteUI.remove();
         return;
     }
 
@@ -824,8 +792,8 @@ function updateUI() {
         const tabId = activeTab.onclick.toString().match(/'([^']+)'/)[1];
         switch (tabId) {
             case 'postsTab':
-                window.renderPosts(); // Ensure posts (including shoutouts) are rendered
-                window.renderTrashBin(); // Render trash bin for posts tab
+                window.renderPosts();
+                window.renderTrashBin();
                 break;
             case 'notificationsTab':
                 window.renderNotifications();
@@ -854,34 +822,26 @@ function updateUI() {
         }
     }
 
-    // Ensure growth loop restarts after UI update
     if (window.growthLoopId) clearInterval(window.growthLoopId);
-    window.startGrowthLoop();
+    if (typeof window.startGrowthLoop === 'function') {
+        window.startGrowthLoop();
+    }
 
-    // Save data if autosave is enabled
     if (autoSaveEnabled) saveUserData();
 }
 
-function showTab(tabId) {
-    const tabs = document.querySelectorAll('.section');
-    const tabButtons = document.querySelectorAll('.tab-button');
-
-    tabs.forEach(tab => {
-        if (tab.id !== 'signupSection' && tab.id !== 'appSection' && tab.id !== 'postControls' && tab.id !== 'adminPanel' && tab.id !== 'passwordModal' && tab.id !== 'accountSwitcherModal') {
-            tab.classList.add('hidden');
-        }
+// Ensure game.js functions are loaded before proceeding
+function waitForGameFunctions() {
+    return new Promise(resolve => {
+        const checkInterval = setInterval(() => {
+            if (typeof window.simulateOfflineGrowth === 'function' && typeof window.startGrowthLoop === 'function') {
+                clearInterval(checkInterval);
+                resolve();
+            } else {
+                console.log('Waiting for game.js functions to load...');
+            }
+        }, 100);
     });
-    document.getElementById(tabId).classList.remove('hidden');
-
-    tabButtons.forEach(btn => btn.classList.remove('active'));
-    const clickedButton = Array.from(tabButtons).find(btn => btn.onclick.toString().includes(tabId));
-    if (clickedButton) clickedButton.classList.add('active');
-
-    if (window.user) {
-        window.user.lastActive = Date.now();
-        if (autoSaveEnabled) saveUserData();
-    }
-    updateUI();
 }
 
 // Load user data immediately
@@ -892,7 +852,7 @@ loadUserData();
 window.addEventListener('beforeunload', (e) => {
     if (window.user) {
         try {
-            const dataToSave = JSON.stringify({ 
+            const dataToSave = JSON.stringify({
                 accounts: window.accounts,
                 generatedAccounts,
                 messages,
@@ -926,14 +886,14 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Initialize UI after user is loaded
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize UI and game functions after user and game.js are ready
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('script.js DOM ready');
-    // Wait for user to be loaded before proceeding
+    await waitForGameFunctions(); // Wait for game.js to load its functions
     const waitForUser = setInterval(() => {
         if (window.isUserLoaded) {
             clearInterval(waitForUser);
-            console.log('User loaded, initializing UI');
+            console.log('User loaded, initializing UI and game');
             try {
                 if (window.user) {
                     document.getElementById('signupSection').classList.add('hidden');
@@ -941,8 +901,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.virtualBaeActive) window.toggleVirtualBae();
                     if (window.paranoidMode) window.toggleParanoidMode();
                     updateUI();
-                    // Notify game.js that user is ready
-                    window.dispatchEvent(new Event('userLoaded'));
+                    if (typeof window.simulateOfflineGrowth === 'function') {
+                        console.log('Calling simulateOfflineGrowth');
+                        window.simulateOfflineGrowth();
+                    }
+                    window.dispatchEvent(new Event('userLoaded')); // Notify game.js
                 } else {
                     document.getElementById('signupSection').classList.remove('hidden');
                     document.getElementById('appSection').classList.add('hidden');
