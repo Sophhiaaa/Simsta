@@ -863,9 +863,41 @@ window.startGrowthLoop = function() {
         window.user.followers += followerGrowth;
         window.checkStatus();
         console.log('Followers increased to:', window.user.followers);
-        if (autoSaveEnabled) window.saveUserData();
+        if (autoSaveEnabled) window.saveUserData(); // Ensure save after follower growth
         window.updateUI();
     }, 3000); // 3 seconds for follower growth
+
+    // Like growth every 4 seconds
+    setInterval(() => {
+        if (!window.user || !Array.isArray(window.user.posts)) return;
+        const followerCount = window.user.followers || 0;
+        const maxPostsToUpdate = Math.min(window.user.posts.length, 3);
+        for (let i = 0; i < maxPostsToUpdate; i++) {
+            const post = window.user.posts[i];
+            const likeGrowth = followerCount >= 1000000 ? 
+                Math.floor(Math.random() * 1000) + 500 : // 500–1,500 likes for millions
+                followerCount >= 100000 ? 
+                Math.floor(Math.random() * 500) + 200 : // 200–700 likes
+                followerCount >= 10000 ? 
+                Math.floor(Math.random() * 50) + 20 : // 20–70 likes
+                Math.floor(Math.random() * 5) + 1; // 1–6 likes
+            post.likes += likeGrowth;
+            if (Math.random() < 0.1) {
+                const username = window.generateRandomUsername();
+                if (!Array.isArray(post.comments)) post.comments = [];
+                post.comments.push({
+                    username: username,
+                    comment: window.pickRandomComment()
+                });
+                window.simulateGeneratedPost(username);
+            }
+        }
+        window.checkStatus();
+        console.log('Likes increased on up to 3 posts');
+        if (autoSaveEnabled) window.saveUserData(); // Ensure save after like growth
+        window.updateUI();
+    }, 4000); // 4 seconds for like growth
+};
 
     // Like growth every 4 seconds
     setInterval(() => {
