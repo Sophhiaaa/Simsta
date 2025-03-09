@@ -567,7 +567,7 @@ img {
     box-shadow: 0 0 15px rgba(255, 105, 180, 0.7);
 }
 
-/* Notification Toast (Original with Explicit Sizing) */
+/* Notification Toast */
 .notification-toast {
     position: fixed;
     bottom: 20px;
@@ -575,13 +575,14 @@ img {
     background: #ff99cc;
     color: white;
     padding: 10px 20px;
-    border-radius: 5px;
+    border-radius: 15px; /* Match the rounded corners in the screenshot */
     z-index: 1000;
     animation: fadeInOut 3s ease-in-out forwards;
-    font-size: 14px; /* Explicit font size */
-    line-height: 1.2; /* Prevent text scaling issues */
-    box-sizing: border-box; /* Ensure padding doesn’t inflate size */
     display: inline-block; /* Fit content width */
+    box-sizing: border-box; /* Ensure padding doesn’t inflate size */
+    font-size: 14px; /* Match text size in screenshot */
+    line-height: 1.2; /* Compact vertical spacing */
+    max-width: 300px; /* Cap width to prevent stretching beyond text */
 }
 
 /* Header and Navigation Styles */
