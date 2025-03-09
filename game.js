@@ -279,7 +279,6 @@ window.generatePost = function(silent = false) {
     const followerGain = Math.floor(Math.random() * 10) + 5; // 5-15 followers per post
     window.user.followers += followerGain;
     window.addNotification(`Your post attracted ${followerGain} new followers! 🌟`);
-    if (!silent) window.addNotification('Generated a fab post! 🌟');
     console.log('After generatePost - posts:', window.user.posts.length, 'followers:', window.user.followers, 'new post likes:', post.likes);
     if (autoSaveEnabled) window.saveUserData();
     window.updateUI();
