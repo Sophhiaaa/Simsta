@@ -34,12 +34,14 @@
 </head>
 <body>
     <div class="container">
-        <div id="signupSection" class="section">
-            <h2>💕 Join the Glam Squad, Bestie! 💕</h2>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <input type="text" id="username" placeholder="Your fab username">
-                <button onclick="generateUsername()" style="background: #ff99cc;">Generate Username 🌸</button>
-            </div>
+        <div id="signupSection">
+            <h2>Create Your Account, Princess! 👑</h2>
+            <input type="text" id="username" placeholder="Enter your username">
+            <button onclick="generateUsername()">Generate Username</button>
+            <input type="file" id="profilePicInput" accept="image/*" onchange="previewProfilePic(event)">
+            <img id="profilePicPreview" class="hidden" alt="Profile Preview">
+            <button onclick="createAccount()">Sign Up</button>
+        </div>
             <input type="file" id="profilePicInput" accept="image/*" onchange="previewProfilePic(event)">
             <img id="profilePicPreview" class="profile-pic hidden" src="" alt="Profile Pic">
             <div style="display: flex; gap: 10px;">
