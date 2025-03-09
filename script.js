@@ -3,7 +3,8 @@ console.log('script.js starting');
 // Saving System Variables and Functions
 let autoSaveEnabled = true;
 const ADMIN_PASSWORD = "admin123";
-const GAME_OWNER_USERNAME = "Sophia"; // Define the game owner (case-insensitive)
+const GAME_OWNER_USERNAME = "sophhiaa"; // Define the game owner (case-insensitive)
+const RESERVED_USERNAMES = ["sophhiaa"]; // Reserved usernames (case-insensitive)
 window.generatedAccounts = window.generatedAccounts || {};
 let saveTimeout = null;
 window.messages = window.messages || [];
@@ -465,7 +466,28 @@ window.createAccount = function() {
         return;
     }
 
-    if (window.accounts.some(account => account.username.toLowerCase() === username.toLowerCase())) {
+    const usernameLower = username.toLowerCase();
+
+    // Check for reserved username "Sophhiaa"
+    if (RESERVED_USERNAMES.includes(usernameLower)) {
+        // Allow the game owner to use the reserved username
+        if (window.user && window.user.username.toLowerCase() === GAME_OWNER_USERNAME.toLowerCase()) {
+            console.log('Game owner is claiming reserved username:', username);
+        } else if (window.accounts.length > 0 && window.accounts.some(account => account.username.toLowerCase() === GAME_OWNER_USERNAME.toLowerCase())) {
+            // If the game owner already exists as another account, allow switching to "Sophhiaa" only if the current user is the game owner
+            alert('Oops! "Sophhiaa" is reserved for the game owner, Sophia! Switch to her account to claim it, princess! 👑');
+            return;
+        } else {
+            // If there's no game owner account yet, this must be the first account creation
+            if (usernameLower !== GAME_OWNER_USERNAME.toLowerCase() && usernameLower === "sophhiaa") {
+                alert('Oops! "Sophhiaa" is reserved for the game owner, Sophia! Try a different username, sweetie! 💕');
+                return;
+            }
+        }
+    }
+
+    // Check if the username is already taken by another account
+    if (window.accounts.some(account => account.username.toLowerCase() === usernameLower)) {
         alert('Oops! That username is taken, pick another one, princess! 💕');
         return;
     }
