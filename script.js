@@ -3,7 +3,7 @@ console.log('script.js starting');
 // Saving System Variables and Functions
 let autoSaveEnabled = true;
 const ADMIN_PASSWORD = "admin123";
-const GAME_OWNER_USERNAME = "Sophhiaa"; // Define the game owner (case-insensitive)
+const GAME_OWNER_USERNAME = "Sophia"; // Define the game owner (case-insensitive)
 window.generatedAccounts = window.generatedAccounts || {};
 let saveTimeout = null;
 window.messages = window.messages || [];
@@ -117,7 +117,7 @@ function saveUserData(showConfirmation = false) {
     }, 2000);
 }
 
-// Optimized loadUserData to ensure immediate loading on refresh
+// Optimized loadUserData with auto-post on refresh
 function loadUserData() {
     console.log('loadUserData called - Starting data load process');
     if (!isLocalStorageAvailable()) {
@@ -219,8 +219,16 @@ function loadUserData() {
         window.currentAccountIndex = 0;
     }
 
-    // Ensure UI updates immediately after loading
+    // Update UI immediately after loading
     updateUI();
+
+    // If user data was loaded, auto-post to ensure data visibility
+    if (window.user && typeof window.generatePost === 'function') {
+        console.log('User data loaded, triggering auto-post on refresh');
+        window.generatePost(true); // Silent post (no "Generated a fab post!" notification)
+        window.addNotification('Posted a fab update for you on refresh, princess! 🌟', false);
+    }
+
     console.log('loadUserData completed - final user state:', JSON.stringify(window.user, null, 2));
     return !!window.user; // Return true if user data was loaded
 }
@@ -878,7 +886,7 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Ensure UI updates after DOM is fully loaded, but only if data wasn't loaded
+// Ensure UI updates after DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM ready');
     if (window.user) {
