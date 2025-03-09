@@ -54,6 +54,7 @@ function saveUserData(showConfirmation = false) {
         console.error('localStorage is not available');
         return;
     }
+    // Update the account in the accounts array
     window.accounts = window.accounts.map(account => {
         if (account.id === window.currentAccountId) return window.user;
         return account;
@@ -98,6 +99,17 @@ function saveUserData(showConfirmation = false) {
                     console.warn('sessionStorage save failed:', e);
                 }
             }
+            // Save per-account data for game.js compatibility
+            localStorage.setItem('simstaUserData_' + window.currentAccountId, JSON.stringify({
+                user: window.user,
+                generatedAccounts: window.generatedAccounts,
+                messages: window.messages,
+                shoutoutStreak: window.shoutoutStreak,
+                lastShoutoutTime: window.lastShoutoutTime,
+                lastDailyReward: window.lastDailyReward,
+                hasEngagementBoost: hasEngagementBoost,
+                hasProfileGlitter: hasProfileGlitter
+            }));
             if (!isLocalStorageFull) {
                 try {
                     localStorage.setItem('simstaAccounts', dataToSave);
@@ -141,7 +153,7 @@ function loadUserData() {
                 window.shoutoutStreak = parsedData.shoutoutStreak || 0;
                 window.lastShoutoutTime = parsedData.lastShoutoutTime || 0;
                 window.lastDailyReward = parsedData.lastDailyReward || 0;
-                window.currentAccountId = parsedData.currentAccountId || null;
+                window.currentAccountId = parsedData.currentAccountId || (window.accounts.length > 0 ? window.accounts[0].id : null);
                 window.user = window.accounts.find(account => account.id === window.currentAccountId) || null;
                 if (window.user) {
                     console.log('Loaded from sessionStorage');
@@ -181,6 +193,19 @@ function loadUserData() {
             window.user = window.accounts.find(account => account.id === window.currentAccountId) || null;
 
             if (window.user) {
+                // Load per-account data for compatibility with game.js
+                const userData = localStorage.getItem('simstaUserData_' + window.currentAccountId);
+                if (userData) {
+                    const parsedUserData = JSON.parse(userData);
+                    window.user = parsedUserData.user;
+                    window.generatedAccounts = parsedUserData.generatedAccounts;
+                    window.messages = parsedUserData.messages;
+                    window.shoutoutStreak = parsedUserData.shoutoutStreak;
+                    window.lastShoutoutTime = parsedUserData.lastShoutoutTime;
+                    window.lastDailyReward = parsedUserData.lastDailyReward;
+                    hasEngagementBoost = parsedUserData.hasEngagementBoost;
+                    hasProfileGlitter = parsedUserData.hasProfileGlitter;
+                }
                 window.user = {
                     id: window.user.id,
                     username: window.user.username || 'DefaultUser',
@@ -223,7 +248,7 @@ function loadUserData() {
             }
         } catch (e) {
             console.error('Parse error in saved data:', e);
-            alert('Failed to load saved data. Resetting.');
+            alert('Failed to load saved data. Starting fresh.');
             window.accounts = [];
             window.user = null;
             window.currentAccountId = null;
@@ -237,13 +262,12 @@ function loadUserData() {
         window.currentAccountId = null;
     }
 
-    // Create "sophhiaa" and "ViviVelvet" accounts if none exist
+    // Only create a default account for new players, not your preset accounts
     if (window.accounts.length === 0) {
         const defaultProfilePic = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC';
-        
-        const sophhiaaAccount = {
-            id: 'sophhiaa_' + Date.now(),
-            username: 'sophhiaa',
+        const newUser = {
+            id: 'newplayer_' + Date.now(),
+            username: 'NewPlayer',
             followers: 0,
             posts: [],
             money: 0,
@@ -256,49 +280,13 @@ function loadUserData() {
             profilePic: defaultProfilePic,
             trashBin: []
         };
-
-        const viviVelvetAccount = {
-            id: 'ViviVelvet_' + Date.now(),
-            username: 'ViviVelvet',
-            followers: 0,
-            posts: [],
-            money: 0,
-            notifications: [],
-            verified: false,
-            famous: false,
-            lastActive: Date.now(),
-            sponsored: false,
-            eventHosted: false,
-            profilePic: defaultProfilePic,
-            trashBin: []
-        };
-
-        window.accounts.push(sophhiaaAccount, viviVelvetAccount);
-        window.currentAccountId = sophhiaaAccount.id; // Default to "sophhiaa" as the active account
-        window.user = sophhiaaAccount;
-        window.addNotification('Created your fab accounts, sophhiaa and ViviVelvet! 💖', false);
-    }
-
-    // Initialize user if still null after loading
-    if (!window.user) {
-        window.user = window.accounts[0] || {
-            id: 'default_' + Date.now(),
-            username: 'DefaultUser',
-            followers: 0,
-            posts: [],
-            money: 0,
-            notifications: [],
-            verified: false,
-            famous: false,
-            lastActive: Date.now(),
-            sponsored: false,
-            eventHosted: false,
-            profilePic: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
-            trashBin: []
-        };
-        if (!window.accounts.find(account => account.id === window.user.id)) {
-            window.accounts.push(window.user);
-        }
+        window.accounts.push(newUser);
+        window.currentAccountId = newUser.id;
+        window.user = newUser;
+        window.addNotification('Welcome, new player! Create your own account to get started! 💖', false);
+    } else if (!window.user) {
+        window.currentAccountId = window.accounts[0].id;
+        window.user = window.accounts[0];
     }
     updateUI(); // Ensure UI updates after loading
 }
@@ -510,6 +498,7 @@ window.addNewAccount = function() {
 };
 
 window.generateUsername = function() {
+    console.log('Generate Username button clicked!'); // Debugging
     const girlyUsernames = [
         'PinkyBlossom', 'GlitterKitten', 'SparkleBae', 'DivaDreams', 'CandyQueen',
         'FairyGlow', 'LuluStar', 'BunnyBae', 'TwinklePaws', 'PixiePearl',
@@ -519,7 +508,13 @@ window.generateUsername = function() {
         'FizzyFawn', 'LiliLush', 'TutuTwirl', 'PipiPetal', 'SukiSweet'
     ];
     const username = girlyUsernames[Math.floor(Math.random() * girlyUsernames.length)];
-    document.getElementById('username').value = username;
+    const usernameInput = document.getElementById('username');
+    if (usernameInput) {
+        usernameInput.value = username;
+        console.log('Username set to:', username); // Debugging
+    } else {
+        console.error('Username input element not found! Check ID "username" in HTML.');
+    }
 };
 
 window.goBackToSwitcher = function() {
@@ -532,6 +527,84 @@ window.goBackToSwitcher = function() {
     } else {
         window.user = null;
         updateUI();
+    }
+};
+
+window.createAccount = function() {
+    console.log('Sign Up button clicked!'); // Debugging
+    const usernameInput = document.getElementById('username');
+    const username = usernameInput ? usernameInput.value.trim() : '';
+    const profilePicInput = document.getElementById('profilePicInput');
+    const profilePic = profilePicInput ? profilePicInput.files[0] : null;
+
+    if (!usernameInput) {
+        console.error('Username input element not found! Check ID "username" in HTML.');
+        alert('Oops! Something broke. Please tell Sophia to check the username field.');
+        return;
+    }
+
+    if (!username) {
+        alert('Need a cute username, girly!');
+        return;
+    }
+
+    const newUser = {
+        id: username + '_' + Date.now(),
+        username: username,
+        followers: 0,
+        posts: [],
+        notifications: [],
+        verified: false,
+        famous: false,
+        lastActive: Date.now(),
+        sponsored: false,
+        eventHosted: false,
+        profilePic: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
+        money: 0,
+        trashBin: [] // Initialize trashBin for new accounts
+    };
+
+    if (profilePic && profilePic.size <= 1 * 1024 * 1024) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            newUser.profilePic = e.target.result;
+            finishAccountCreation(newUser);
+        };
+        reader.onerror = (e) => {
+            console.error('Error reading profile picture:', e);
+            alert('Oops! Couldn’t read your profile picture. Using default instead.');
+            finishAccountCreation(newUser);
+        };
+        reader.readAsDataURL(profilePic);
+    } else {
+        if (profilePic) {
+            console.warn('Profile picture too large (> 1MB), using default.');
+        }
+        finishAccountCreation(newUser);
+    }
+};
+
+window.previewProfilePic = function(event) {
+    console.log('Profile picture selected!'); // Debugging
+    const file = event.target.files[0];
+    const preview = document.getElementById('profilePicPreview');
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (preview) {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+                console.log('Profile picture preview updated.');
+            } else {
+                console.error('Profile picture preview element not found! Check ID "profilePicPreview" in HTML.');
+            }
+        };
+        reader.onerror = (e) => {
+            console.error('Error reading profile picture for preview:', e);
+        };
+        reader.readAsDataURL(file);
+    } else {
+        console.warn('No file selected for profile picture.');
     }
 };
 
@@ -651,84 +724,6 @@ function adjustPostCount(newPostCount) {
 }
 
 // Core UI Functions
-window.previewProfilePic = function(event) {
-    console.log('Profile picture selected!'); // Debugging
-    const file = event.target.files[0];
-    const preview = document.getElementById('profilePicPreview');
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            if (preview) {
-                preview.src = e.target.result;
-                preview.classList.remove('hidden');
-                console.log('Profile picture preview updated.');
-            } else {
-                console.error('Profile picture preview element not found! Check ID "profilePicPreview" in HTML.');
-            }
-        };
-        reader.onerror = (e) => {
-            console.error('Error reading profile picture for preview:', e);
-        };
-        reader.readAsDataURL(file);
-    } else {
-        console.warn('No file selected for profile picture.');
-    }
-};
-
-window.createAccount = function() {
-    console.log('Sign Up button clicked!'); // Debugging
-    const usernameInput = document.getElementById('username');
-    const username = usernameInput ? usernameInput.value.trim() : '';
-    const profilePicInput = document.getElementById('profilePicInput');
-    const profilePic = profilePicInput ? profilePicInput.files[0] : null;
-
-    if (!usernameInput) {
-        console.error('Username input element not found! Check ID "username" in HTML.');
-        alert('Oops! Something broke. Please tell Sophia to check the username field.');
-        return;
-    }
-
-    if (!username) {
-        alert('Need a cute username, girly!');
-        return;
-    }
-
-    const newUser = {
-        id: username + '_' + Date.now(),
-        username: username,
-        followers: 0,
-        posts: [],
-        notifications: [],
-        verified: false,
-        famous: false,
-        lastActive: Date.now(),
-        sponsored: false,
-        eventHosted: false,
-        profilePic: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACCSURBVGhD7dQhDsAgEETR3zO2/wVHsEQTQ9OQhyqP9EOGYChFuC9jV5sR5oQ88YjsL2tXmxHmRDwiu2v+zu3qM8KcIKeQJ+SR5gl5hDzSnCDPkGfkEfJIM8KcIM+QZ+QZ8kwzwpwg55Bn5BnyTDPCnCDnkGfkGfJMM8KcIOeQZ+QZcsw/wAUrX6L6xV9qAAAAAElFTkSuQmCC',
-        money: 0,
-        trashBin: [] // Initialize trashBin for new accounts
-    };
-
-    if (profilePic && profilePic.size <= 1 * 1024 * 1024) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            newUser.profilePic = e.target.result;
-            finishAccountCreation(newUser);
-        };
-        reader.onerror = (e) => {
-            console.error('Error reading profile picture:', e);
-            alert('Oops! Couldn’t read your profile picture. Using default instead.');
-            finishAccountCreation(newUser);
-        };
-        reader.readAsDataURL(profilePic);
-    } else {
-        if (profilePic) {
-            console.warn('Profile picture too large (> 1MB), using default.');
-        }
-        finishAccountCreation(newUser);
-    }
-};
-
 function finishAccountCreation(newUser) {
     window.accounts.push(newUser);
     window.currentAccountId = newUser.id;
@@ -839,6 +834,7 @@ function updateUI() {
     if (now - lastUpdate < 500) return;
     lastUpdate = now;
 
+    // Ensure signup section is shown and app section is hidden if no user
     if (!window.user) {
         document.getElementById('signupSection').classList.remove('hidden');
         document.getElementById('appSection').classList.add('hidden');
@@ -849,6 +845,7 @@ function updateUI() {
         return;
     }
 
+    // Show app section only if user exists
     document.getElementById('signupSection').classList.add('hidden');
     document.getElementById('appSection').classList.remove('hidden');
 
@@ -971,7 +968,11 @@ document.addEventListener('keydown', (e) => {
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM ready');
-    if (window.user) {
+    // Only initialize UI if user exists, otherwise force signup
+    if (!window.user) {
+        document.getElementById('signupSection').classList.remove('hidden');
+        document.getElementById('appSection').classList.add('hidden');
+    } else {
         document.getElementById('signupSection').classList.add('hidden');
         document.getElementById('appSection').classList.remove('hidden');
         window.simulateOfflineGrowth();
@@ -979,9 +980,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.virtualBaeActive) window.toggleVirtualBae = window.toggleVirtualBae || function() {}; // Placeholder
         if (window.paranoidMode) window.toggleParanoidMode();
         updateUI();
-    } else {
-        document.getElementById('signupSection').classList.remove('hidden');
-        document.getElementById('appSection').classList.add('hidden');
     }
 });
 
