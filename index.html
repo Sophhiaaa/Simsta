@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simsta - Ultimate Girly Insta Sim 💕</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Inline fallback CSS to ensure button clickability */
+        .post-buttons {
+            position: relative;
+            z-index: 10;
+            margin-top: 10px;
+        }
+        .delete-button {
+            background: linear-gradient(45deg, #ff9999, #ff6666);
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            pointer-events: auto;
+            z-index: 11;
+        }
+        .delete-button:hover {
+            background: #ff6699;
+        }
+        .comment-center {
+            position: relative;
+            z-index: 9;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="signupSection" class="section">
+            <h2>💕 Join the Glam Squad, Bestie! 💕</h2>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="text" id="username" placeholder="Your fab username">
+                <button onclick="generateUsername()" style="background: #ff99cc;">Generate Username 🌸</button>
+            </div>
+            <input type="file" id="profilePicInput" accept="image/*" onchange="previewProfilePic(event)">
+            <img id="profilePicPreview" class="profile-pic hidden" src="" alt="Profile Pic">
+            <div style="display: flex; gap: 10px;">
+                <button onclick="createAccount()">Slay Your Signup!</button>
+                <button onclick="goBackToSwitcher()" style="background: #ffb6c1;">Go Back 👋</button>
+            </div>
+        </div>
+
+        <div id="appSection" class="section hidden">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center;">
+                    <img id="profilePicDisplay" class="profile-pic" src="">
+                    <h2>Hey, <span id="usernameDisplay" class="famous"></span>! 💖</h2>
+                </div>
+                <button id="switchAccountButton" onclick="showAccountSwitcher()" style="background: #ff69b4;">Switch/Add Account 👯‍♀️</button>
+            </div>
+            <p>Followers: <span id="followerCount">0</span> <button class="refresh-button" onclick="refreshFollowers()">Refresh ✨</button> Posts: <span id="postCount">0</span></p>
+            <p id="moneyDisplay">Money: $0</p>
+            <button onclick="resetAccount()" style="background: #ff9999;">Reset Account</button>
+            <div class="save-options">
+                <button onclick="saveUserData(true)" style="background: #ffb6c1;">Save Now 💾</button>
+                <button id="toggleAutoSave" onclick="toggleAutoSave()" style="background: #ffcc99;">Auto-Save: ON</button>
+                <button onclick="exportUserData()" style="background: #ff99cc;">Export Data 📤</button>
+                <input type="file" id="importFile" accept=".json" onchange="importUserData(event)" style="display: none;">
+                <button onclick="document.getElementById('importFile').click()" style="background: #ff99cc;">Import Data 📥</button>
+                <button id="adminTrigger" onclick="showPasswordModal()" style="background: #ff69b4;">Admin Panel 👑</button>
+            </div>
+
+            <div class="social-buttons">
+                <button onclick="shareProfile()">Share Profile 📲</button>
+                <button onclick="liveStream()">Go Live 🎥</button>
+                <button onclick="claimDailyReward()" style="background: #ff69b4;">Daily Reward 🎁</button>
+            </div>
+
+            <div class="fame-buttons">
+                <button onclick="getSponsored()">Get Sponsored 💰</button>
+                <button onclick="hostEvent()">Host Event 🎉</button>
+            </div>
+
+            <button onclick="toggleParanoidMode()">Paranoid Mode 👻</button>
+
+            <div class="section" id="postControls">
+                <h3>✨ Spill the Tea, Queen! ✨</h3>
+                <button id="generatePostButton" onclick="generatePost()">Generate Post 🌟</button>
+                <button onclick="toggleManualPost()">Add Your Own Pic 📸</button>
+                <div id="manualPostSection" class="hidden">
+                    <input type="file" id="imageInput" accept="image/*">
+                    <textarea id="captionInput" placeholder="What’s the vibe, girly? #hashtag"></textarea>
+                    <button onclick="createManualPost()">Post It, Babe!</button>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <div class="tab-button active" onclick="showTab('postsTab')">Posts</div>
+                <div class="tab-button" onclick="showTab('notificationsTab')">Notifications</div>
+                <div class="tab-button" onclick="showTab('likesTab')">Likes</div>
+                <div class="tab-button" onclick="showTab('commentsTab')">Comments</div>
+                <div class="tab-button" onclick="showTab('generatedAccountsTab')">Generated Accounts</div>
+                <div class="tab-button" onclick="showTab('profileTab')">Profile</div>
+                <div class="tab-button" onclick="showTab('aiAccountsTab')">AI Accounts</div>
+                <div class="tab-button" onclick="showTab('messagesTab')">Messages</div>
+                <div class="tab-button" onclick="showTab('shopTab')">Shop</div>
+            </div>
+
+            <div id="postsTab" class="section">
+                <h3>💌 Your Fab Posts 💌</h3>
+                <button id="sortButton" onclick="cycleSortPosts()" style="background: #ff69b4;">Sort by Highest ↓</button>
+                <div id="feed"></div>
+            </div>
+
+            <div id="notificationsTab" class="section hidden">
+                <h3>🌸 What’s Poppin’, Princess? 🌸</h3>
+                <div id="notifications"></div>
+            </div>
+
+            <div id="likesTab" class="section hidden">
+                <h3>❤️ Your Likes Feed ❤️</h3>
+                <div id="likesFeed"></div>
+            </div>
+
+            <div id="commentsTab" class="section hidden">
+                <h3>💬 Your Comments Feed 💬</h3>
+                <div id="commentsFeed"></div>
+            </div>
+
+            <div id="generatedAccountsTab" class="section hidden">
+                <h3>🌟 Generated Accounts’ Posts 🌟</h3>
+                <div id="generatedFeed"></div>
+            </div>
+
+            <div id="profileTab" class="section hidden">
+                <h3>👑 Edit Your Profile, Queen! 👑</h3>
+                <div class="profile-edit">
+                    <label>Username: <input type="text" id="editUsername" placeholder="Your fab username"></label>
+                    <label>Profile Picture: <input type="file" id="editProfilePicInput" accept="image/*" onchange="previewEditProfilePic(event)"></label>
+                    <img id="editProfilePicPreview" class="profile-pic hidden" src="" alt="Profile Pic Preview">
+                    <button onclick="saveProfileChanges()" style="background: #ff69b4;">Save Changes ✨</button>
+                    <button id="shoutoutButton" onclick="giveShoutout()" style="background: #ff99cc;">Give Shoutout 📣</button>
+                    <p>Shoutout Streak: <span id="shoutoutStreak">0</span></p>
+                </div>
+            </div>
+
+            <div id="aiAccountsTab" class="section hidden">
+                <h3>🤖 AI Accounts 🤖</h3>
+                <div id="aiAccountsFeed"></div>
+            </div>
+
+            <div id="messagesTab" class="section hidden">
+                <h3>💌 Messages from the Stars! 💌</h3>
+                <div id="messagesFeed"></div>
+            </div>
+
+            <div id="shopTab" class="section hidden">
+                <h3>🛍️ Shop ‘Til You Slay! 🛍️</h3>
+                <p>Money: $<span id="shopMoneyDisplay">0</span></p>
+                <div class="shop-items">
+                    <div class="shop-item">
+                        <p><strong>Follower Boost</strong> - Gain 500 followers!</p>
+                        <button onclick="buyFollowerBoost()" style="background: #ff99cc;">$200</button>
+                    </div>
+                    <div class="shop-item">
+                        <p><strong>Engagement Boost</strong> - 50% more likes on next post!</p>
+                        <button onclick="buyEngagementBoost()" style="background: #ffb6c1;">$100</button>
+                    </div>
+                    <div class="shop-item">
+                        <p><strong>Profile Glitter</strong> - Add sparkle to your username!</p>
+                        <button onclick="buyProfileGlitter()" style="background: #ffcc99;">$50</button>
+                    </div>
+                    <div class="shop-item">
+                        <p><strong>Candy Theme</strong> - Sweet profile look!</p>
+                        <button onclick="buyTheme('candy')" style="background: #ff69b4;">$150</button>
+                    </div>
+                    <div class="shop-item">
+                        <p><strong>Galaxy Theme</strong> - Cosmic vibes!</p>
+                        <button onclick="buyTheme('galaxy')" style="background: #8a2be2;">$150</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password Modal -->
+            <div id="passwordModal" class="admin-modal hidden">
+                <div class="admin-content">
+                    <h2>👑 Enter Password, Queen! 👑</h2>
+                    <input type="password" id="adminPasswordInput" placeholder="Your secret code 💖">
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button onclick="validatePassword()" style="background: #ff69b4;">Submit ✨</button>
+                        <button onclick="hidePasswordModal()" style="background: #ffb6c1;">Cancel 👋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Panel Modal -->
+            <div id="adminPanel" class="admin-modal hidden">
+                <div class="admin-content">
+                    <h2>👑 Admin Panel 👑</h2>
+                    <p>Only for the queen herself! 💖</p>
+                    <div class="admin-controls">
+                        <label>Followers: <input type="number" id="adminFollowers" min="0"></label>
+                        <label>Money: <input type="number" id="adminMoney" min="0"></label>
+                        <label>Money Multiplier: <input type="number" id="adminMoneyMultiplier" min="1" value="1" step="0.1"></label>
+                        <label>Post Count: <input type="number" id="adminPostCount" min="0"></label>
+                        <label>Verified: <input type="checkbox" id="adminVerified"></label>
+                        <label>Famous: <input type="checkbox" id="adminFamous"></label>
+                        <label>Paranoid Mode: <input type="checkbox" id="adminParanoid"></label>
+                        <button onclick="applyAdminChanges()" style="background: #ff69b4;">Apply Changes ✨</button>
+                        <button onclick="clearNotifications()" style="background: #ffcc99;">Clear Notifications 🔔</button>
+                        <button onclick="resetAIAccounts()" style="background: #ff99cc;">Reset AI Accounts 🤖</button>
+                        <button onclick="resetGameFromAdmin()" style="background: #ff9999;">Reset Game 🗑️</button>
+                        <button onclick="hideAdminPanel()" style="background: #ffb6c1;">Close 👋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Switcher Modal -->
+            <div id="accountSwitcherModal" class="admin-modal hidden">
+                <div class="admin-content">
+                    <h2>👯‍♀️ Switch or Add Account, Babe! 👯‍♀️</h2>
+                    <div id="accountList"></div>
+                    <button onclick="addNewAccount()" style="background: #ffb6c1; margin-top: 10px;">Add New Account 🌸</button>
+                    <button onclick="hideAccountSwitcher()" style="background: #ff9999; margin-top: 10px;">Close 👋</button>
+                </div>
+            </div>
+
+            <!-- Save Confirmation (Added for script.js compatibility) -->
+            <div id="saveConfirmation" style="display: none; position: fixed; top: 10px; right: 10px; background: #ff99cc; color: white; padding: 5px 10px; border-radius: 5px;"></div>
+        </div>
+    </div>
+
+    <!-- Load scripts with error handling -->
+    <script src="script.js" onerror="console.error('Failed to load script.js'); alert('Oops, script.js didn’t load, babe! Try refreshing! 💔')"></script>
+    <script src="game.js" onerror="console.error('Failed to load game.js'); alert('Oops, game.js didn’t load, babe! Try refreshing! 💔')"></script>
+
+    <!-- Remove or comment out the CDN iframe scripts to avoid interference -->
+    <!-- 
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'91cd4408ca802f19',t:'MTc0MTM4Mzc3OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'91cd816e0888b049',t:'MTc0MTM4NjI5My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'91cd9896cdfa7bdb',t:'MTc0MTM4NzI0Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'91cdd181ec88c013',t:'MTc0MTM4OTU3My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+    -->
+</body>
+</html>
