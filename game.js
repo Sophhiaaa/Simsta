@@ -865,8 +865,9 @@ window.startGrowthLoop = function() {
         console.log('Followers increased to:', window.user.followers);
         if (autoSaveEnabled) window.saveUserData(); // Ensure save after follower growth
         window.updateUI();
-    }, 3000); // 3 seconds for follower growth
-
+        }; 3000); // 3 seconds for follower growth
+    };
+    
     // Like growth every 4 seconds
     setInterval(() => {
         if (!window.user || !Array.isArray(window.user.posts)) return;
