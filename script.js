@@ -3,6 +3,7 @@ console.log('script.js starting');
 // Saving System Variables and Functions
 let autoSaveEnabled = true;
 const ADMIN_PASSWORD = "admin123";
+const GAME_OWNER_USERNAME = "Sophia"; // Define the game owner (case-insensitive)
 window.generatedAccounts = window.generatedAccounts || {};
 let saveTimeout = null;
 window.messages = window.messages || [];
@@ -66,7 +67,7 @@ function saveUserData(showConfirmation = false) {
                     username: account.username,
                     followers: account.followers, // Ensure followers are saved
                     money: account.money,
-                    posts: account.posts, // Save all posts (no slice for now to test)
+                    posts: account.posts, // Save all posts
                     verified: account.verified,
                     famous: account.famous,
                     profilePic: account.profilePic,
@@ -723,6 +724,17 @@ function updateUI() {
         }
     }
 
+    // Restrict admin access based on ownership
+    const isOwner = window.user.username.toLowerCase() === GAME_OWNER_USERNAME.toLowerCase();
+    const adminTrigger = document.getElementById('adminTrigger');
+    if (adminTrigger) {
+        adminTrigger.style.display = isOwner ? 'inline-block' : 'none';
+    }
+    if (!isOwner) {
+        document.getElementById('adminPanel').classList.add('hidden');
+        document.getElementById('passwordModal').classList.add('hidden');
+    }
+
     // Ensure growth loop restarts after UI update
     if (window.growthLoopId) clearInterval(window.growthLoopId);
     window.startGrowthLoop();
@@ -751,6 +763,104 @@ function showTab(tabId) {
         if (autoSaveEnabled) saveUserData();
     }
     updateUI();
+}
+
+function showPasswordModal() {
+    // Only show password modal if user is the owner
+    if (window.user && window.user.username.toLowerCase() === GAME_OWNER_USERNAME.toLowerCase()) {
+        document.getElementById('passwordModal').classList.remove('hidden');
+    } else {
+        window.addNotification('Sorry, babe! Only the game owner can access this! 👑', false);
+    }
+}
+
+function hidePasswordModal() {
+    document.getElementById('passwordModal').classList.add('hidden');
+}
+
+function validatePassword() {
+    const passwordInput = document.getElementById('adminPasswordInput').value;
+    if (passwordInput === ADMIN_PASSWORD && window.user.username.toLowerCase() === GAME_OWNER_USERNAME.toLowerCase()) {
+        document.getElementById('passwordModal').classList.add('hidden');
+        document.getElementById('adminPanel').classList.remove('hidden');
+    } else {
+        window.addNotification('Wrong password or not the owner, sweetie! Try again! 💔', false);
+    }
+}
+
+function hideAdminPanel() {
+    document.getElementById('adminPanel').classList.add('hidden');
+}
+
+function applyAdminChanges() {
+    if (window.user && window.user.username.toLowerCase() === GAME_OWNER_USERNAME.toLowerCase()) {
+        window.user.followers = Number(document.getElementById('adminFollowers').value) || window.user.followers;
+        window.user.money = Number(document.getElementById('adminMoney').value) || window.user.money;
+        window.user.posts = Array(Number(document.getElementById('adminPostCount').value)).fill().map(() => ({
+            likes: 0,
+            comments: [],
+            isViral: false,
+            isSuperViral: false,
+            liked: false,
+            caption: '',
+            hashtags: [],
+            imageData: ''
+        })) || window.user.posts;
+        window.user.verified = document.getElementById('adminVerified').checked;
+        window.user.famous = document.getElementById('adminFamous').checked;
+        window.paranoidMode = document.getElementById('adminParanoid').checked;
+        if (window.paranoidMode) window.toggleParanoidMode();
+        saveUserData();
+        window.addNotification('Admin changes applied, queen! ✨', false);
+        updateUI();
+    } else {
+        window.addNotification('Only the owner can change settings, babe! 👑', false);
+    }
+}
+
+function clearNotifications() {
+    if (window.user && window.user.username.toLowerCase() === GAME_OWNER_USERNAME.toLowerCase()) {
+        window.user.notifications = [];
+        saveUserData();
+        window.addNotification('Notifications cleared, slay! 🔔', false);
+        updateUI();
+    } else {
+        window.addNotification('Only the owner can clear notifications, babe! 👑', false);
+    }
+}
+
+function resetAIAccounts() {
+    if (window.user && window.user.username.toLowerCase() === GAME_OWNER_USERNAME.toLowerCase()) {
+        window.generatedAccounts = {};
+        saveUserData();
+        window.addNotification('AI accounts reset, fab! 🤖', false);
+        updateUI();
+    } else {
+        window.addNotification('Only the owner can reset AI accounts, babe! 👑', false);
+    }
+}
+
+function resetGameFromAdmin() {
+    if (window.user && window.user.username.toLowerCase() === GAME_OWNER_USERNAME.toLowerCase()) {
+        if (confirm('Reset the whole game, queen? This can’t be undone! 💔')) {
+            window.accounts = [];
+            window.user = null;
+            window.currentAccountIndex = 0;
+            window.generatedAccounts = {};
+            window.messages = [];
+            hasEngagementBoost = false;
+            hasProfileGlitter = false;
+            window.shoutoutStreak = 0;
+            window.lastShoutoutTime = 0;
+            window.lastDailyReward = 0;
+            localStorage.clear();
+            saveUserData();
+            window.addNotification('Game reset, fresh start! 🌸', false);
+            updateUI();
+        }
+    } else {
+        window.addNotification('Only the owner can reset the game, babe! 👑', false);
+    }
 }
 
 // Load user data immediately
@@ -786,9 +896,9 @@ window.addEventListener('beforeunload', (e) => {
     }
 });
 
-// Add keyboard shortcut for password modal (Ctrl+Shift+A)
+// Add keyboard shortcut for password modal (Ctrl+Shift+A) only for owner
 document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+    if (e.ctrlKey && e.shiftKey && e.key === 'A' && window.user && window.user.username.toLowerCase() === GAME_OWNER_USERNAME.toLowerCase()) {
         console.log('Ctrl+Shift+A pressed, showing password modal');
         showPasswordModal();
     }
