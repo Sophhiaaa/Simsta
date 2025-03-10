@@ -840,9 +840,6 @@ window.simulateEngagement = function(index) {
     window.checkStatus();
 };
 
-// Removed duplicate simulateEngagement code that was outside a function
-// It’s now correctly nested above as intended
-
 window.simulateGeneratedPost = function(username) {
     if (!window.generatedAccounts) {
         window.generatedAccounts = {};
