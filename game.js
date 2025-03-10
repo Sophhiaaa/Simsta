@@ -1158,6 +1158,75 @@ window.confirmShoutout = function(postIndex, accountIndex) {
     document.getElementById('shoutoutModal').remove();
 };
 
+// New Delete Account Functions
+window.showDeleteAccountModal = function() {
+    if (window.accounts.length <= 1) {
+        window.addNotification('You need at least one account, Sophia! Can’t delete your only one! 💖');
+        return;
+    }
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal';
+    modal.id = 'deleteAccountModal';
+    const modalContent = document.createElement('div');
+    modalContent.className = 'admin-content';
+    modalContent.innerHTML = `
+        <h3>Select an Account to Delete, Sophia! 🗑️</h3>
+        <div id="accountDeleteList"></div>
+        <button onclick="document.getElementById('deleteAccountModal').remove()" style="background: #ffb6c1; margin-top: 10px;">Cancel 💔</button>
+    `;
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    const accountList = document.getElementById('accountDeleteList');
+    window.accounts.forEach((account, index) => {
+        const accountDiv = document.createElement('div');
+        accountDiv.style.margin = '5px 0';
+        accountDiv.innerHTML = `
+            <span>${account.username} (Followers: ${window.formatNumber(account.followers)})</span>
+            <button onclick="window.confirmDeleteAccount(${index})" style="background: #ff6666; margin-left: 10px;">Delete 🗑️</button>
+        `;
+        accountList.appendChild(accountDiv);
+    });
+};
+
+window.confirmDeleteAccount = function(accountIndex) {
+    console.log('Confirming delete for account index:', accountIndex);
+
+    if (accountIndex < 0 || accountIndex >= window.accounts.length) {
+        console.error('Invalid account index:', accountIndex);
+        window.addNotification('Oops, couldn’t find that account, Sophia! 😕');
+        document.getElementById('deleteAccountModal').remove();
+        return;
+    }
+
+    const deletedAccount = window.accounts[accountIndex];
+    window.accounts.splice(accountIndex, 1); // Remove the account
+
+    // If the deleted account was the current one, switch to the first account
+    if (accountIndex === window.currentAccountIndex) {
+        window.currentAccountIndex = 0;
+        window.user = window.accounts[0];
+        window.addNotification(`Deleted @${deletedAccount.username}, Sophia! Switched to @${window.user.username}! 💕`);
+    } else {
+        // Adjust currentAccountIndex if it’s after the deleted account
+        if (window.currentAccountIndex > accountIndex) window.currentAccountIndex--;
+        window.addNotification(`Deleted @${deletedAccount.username}, Sophia! 💕`);
+    }
+
+    if (typeof window.saveUserData === 'function') {
+        window.saveUserData();
+    } else {
+        console.error('saveUserData function not found, Sophia!');
+    }
+    if (typeof window.updateUI === 'function') {
+        window.updateUI();
+    } else {
+        console.error('updateUI function not found, Sophia!');
+    }
+
+    document.getElementById('deleteAccountModal').remove();
+};
+
 // Initialization
 if (window.user) {
     window.simulateOfflineGrowth();
