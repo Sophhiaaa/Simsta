@@ -839,28 +839,9 @@ window.simulateEngagement = function(index) {
     window.user.followers += Math.floor(likes * 0.02);
     window.checkStatus();
 };
-// Duplicate simulateEngagement code preserved as per your original
-    likes = Math.max(Math.floor(likes * (1 + hashtagBoost * 0.1)), 10);
-    if (hasEngagementBoost) {
-        likes = Math.floor(likes * 1.5);
-        hasEngagementBoost = false;
-        window.addNotification('Engagement Boost applied, Sophia! Likes increased! 📈');
-    }
 
-    window.user.posts[index].likes = likes;
-    if (window.debugLikes) console.log(`Simulated engagement for post ${index}: ${likes} likes, ${commentCount} comments`);
-
-    for (let i = 0; i < commentCount; i++) {
-        const username = window.generateRandomUsername();
-        if (!Array.isArray(window.user.posts[index].comments)) window.user.posts[index].comments = [];
-        window.user.posts[index].comments.push({
-            username: username,
-            comment: window.pickRandomComment()
-        });
-        window.simulateGeneratedPost(username);
-    }
-    window.user.followers += Math.floor(likes * 0.02);
-    window.checkStatus();
+// Removed duplicate simulateEngagement code that was outside a function
+// It’s now correctly nested above as intended
 
 window.simulateGeneratedPost = function(username) {
     if (!window.generatedAccounts) {
@@ -956,9 +937,8 @@ window.startGrowthLoop = function() {
         // Batch UI update every 4 seconds
         window.updateUI();
     }, 4000); // 4 seconds
-};
 
-// Duplicate like growth interval preserved as per your original
+    // Like growth every 5 seconds (your duplicate interval)
     setInterval(() => {
         if (!window.user || !Array.isArray(window.user.posts)) return;
         const followerCount = window.user.followers || 0;
@@ -988,7 +968,6 @@ window.startGrowthLoop = function() {
         if (autoSaveEnabled) window.saveUserData();
         window.updateUI();
     }, 5000); // 5 seconds for like growth
-// Closing brace for startGrowthLoop added here to match your structure
 };
 
 window.simulateOfflineGrowth = function() {
