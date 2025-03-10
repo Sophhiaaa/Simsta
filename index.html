@@ -11,10 +11,14 @@
             color: #333;
             margin: 0;
             padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
         }
         .container {
             max-width: 800px;
-            margin: 0 auto;
+            width: 100%;
             background: rgba(255, 255, 255, 0.9);
             padding: 20px;
             border-radius: 15px;
@@ -23,12 +27,16 @@
         h1 {
             text-align: center;
             color: #ff1493; /* Deep Pink */
+            margin: 0 0 20px 0;
         }
-        .admin-buttons, .game-buttons {
+        .admin-section, .profile-info, .game-controls, .tab-buttons {
+            margin-bottom: 20px;
+        }
+        .admin-section, .game-controls, .tab-buttons {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             justify-content: center;
-            margin: 10px 0;
         }
         button {
             padding: 10px 20px;
@@ -41,6 +49,10 @@
         }
         button:hover {
             background: #00ced1; /* Cyan */
+        }
+        .profile-info p {
+            margin: 5px 0;
+            text-align: center;
         }
         .tab {
             display: none;
@@ -57,6 +69,9 @@
         }
         .post-stats, .post-buttons {
             margin-top: 5px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
         .like-button {
             cursor: pointer;
@@ -69,8 +84,12 @@
         .comment-center {
             margin-top: 10px;
         }
+        .comment-input {
+            display: flex;
+            gap: 5px;
+        }
         .comment-input input {
-            width: 70%;
+            flex: 1;
             padding: 5px;
         }
         .admin-modal {
@@ -89,9 +108,14 @@
             padding: 20px;
             border-radius: 10px;
             text-align: center;
+            max-width: 400px;
+            width: 90%;
         }
         #manualPostSection {
             margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
         .hidden {
             display: none;
@@ -103,20 +127,20 @@
         <h1>Simsta - Ultimate Girly Insta Sim</h1>
 
         <!-- Admin Section -->
-        <div class="admin-buttons">
+        <div class="admin-section">
             <button id="signupButton" onclick="signup()">Sign Up 🌸</button>
             <button id="deleteAccountButton" onclick="window.showDeleteAccountModal()">Delete Account 🗑️</button>
         </div>
 
         <!-- Profile Info -->
-        <div id="profileInfo">
+        <div class="profile-info">
             <p>Username: <span id="usernameDisplay"></span></p>
             <p>Followers: <span id="followerCount">0</span></p>
             <p>Money: $<span id="moneyDisplay">0</span></p>
         </div>
 
-        <!-- Game Buttons -->
-        <div class="game-buttons">
+        <!-- Game Controls -->
+        <div class="game-controls">
             <button onclick="window.generatePost()">Generate Post 📸</button>
             <button onclick="window.toggleManualPost()">Manual Post ✍️</button>
             <button onclick="window.liveStream()">Go Live 🎥</button>
@@ -131,8 +155,8 @@
             <button onclick="window.createManualPost()">Post It! 💕</button>
         </div>
 
-        <!-- Tabs -->
-        <div class="game-buttons">
+        <!-- Tab Buttons -->
+        <div class="tab-buttons">
             <button onclick="showTab('postsTab')">Posts</button>
             <button onclick="showTab('notificationsTab')">Notifications</button>
             <button onclick="showTab('likesTab')">Likes</button>
@@ -140,32 +164,28 @@
             <button onclick="showTab('profileTab')">Profile</button>
         </div>
 
-        <!-- Posts Tab -->
+        <!-- Tabs -->
         <div id="postsTab" class="tab active">
             <div id="feed"></div>
         </div>
 
-        <!-- Notifications Tab -->
         <div id="notificationsTab" class="tab">
             <div id="notifications"></div>
         </div>
 
-        <!-- Likes Tab -->
         <div id="likesTab" class="tab">
             <div id="likesFeed"></div>
         </div>
 
-        <!-- Comments Tab -->
         <div id="commentsTab" class="tab">
             <div id="commentsFeed"></div>
         </div>
 
-        <!-- Profile Tab -->
         <div id="profileTab" class="tab">
             <h3>Edit Profile, Sophia! 💖</h3>
             <input type="text" id="editUsername" placeholder="New Username">
             <input type="file" id="editProfilePicInput" accept="image/*" onchange="window.previewEditProfilePic(event)">
-            <img id="editProfilePicPreview" class="hidden" style="max-width: 100px;">
+            <img id="editProfilePicPreview" class="hidden" style="max-width: 100px; margin: 10px 0;">
             <button onclick="window.saveProfileChanges()">Save Changes ✨</button>
         </div>
     </div>
@@ -176,7 +196,9 @@
         function showTab(tabId) {
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            window.updateUI(); // Ensure UI updates when switching tabs
+            if (typeof window.updateUI === 'function') {
+                window.updateUI(); // Update UI when switching tabs
+            }
         }
     </script>
 </body>
