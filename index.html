@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simsta - Ultimate Girly Insta Sim</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Your CSS from the second <DOCUMENT> -->
     <style>
+        /* Keeping your inline styles for that Smudge Gradient Pink Cyan magic! */
         body {
             font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #ff69b4, #00ffff); /* Smudge Gradient Pink Cyan */
@@ -126,67 +128,135 @@
     <div class="container">
         <h1>Simsta - Ultimate Girly Insta Sim</h1>
 
-        <!-- Admin Section -->
-        <div class="admin-section">
-            <button id="signupButton" onclick="signup()">Sign Up 🌸</button>
-            <button id="deleteAccountButton" onclick="window.showDeleteAccountModal()">Delete Account 🗑️</button>
+        <!-- Signup Section -->
+        <div id="signupSection" class="section">
+            <h3>Create Your Account, Sophia! 🌸</h3>
+            <input type="text" id="username" placeholder="Your fab username">
+            <input type="file" id="profilePicInput" accept="image/*" onchange="previewProfilePic(event)">
+            <img id="profilePicPreview" class="hidden" style="max-width: 100px; margin: 10px 0;">
+            <button onclick="createAccount()">Sign Up, Princess! 💕</button>
+            <button onclick="window.generateUsername()">Random Username ✨</button>
         </div>
 
-        <!-- Profile Info -->
-        <div class="profile-info">
-            <p>Username: <span id="usernameDisplay"></span></p>
-            <p>Followers: <span id="followerCount">0</span></p>
-            <p>Money: $<span id="moneyDisplay">0</span></p>
-        </div>
+        <!-- Main App Section -->
+        <div id="appSection" class="section hidden">
+            <!-- Admin Section (Restored from your original) -->
+            <div class="admin-section">
+                <button id="signupButton" onclick="signup()">Sign Up 🌸</button>
+                <button id="deleteAccountButton" onclick="window.showDeleteAccountModal()">Delete Account 🗑️</button>
+            </div>
 
-        <!-- Game Controls -->
-        <div class="game-controls">
-            <button onclick="window.generatePost()">Generate Post 📸</button>
-            <button onclick="window.toggleManualPost()">Manual Post ✍️</button>
-            <button onclick="window.liveStream()">Go Live 🎥</button>
-            <button onclick="window.shareProfile()">Share Profile 📲</button>
-            <button id="sortButton" onclick="window.cycleSortPosts()">Sort by Highest ↓</button>
-        </div>
+            <!-- Profile Info -->
+            <div class="profile-info">
+                <p>Username: <span id="usernameDisplay"></span></p>
+                <p>Followers: <span id="followerCount">0</span></p>
+                <p id="moneyDisplay">Money: $<span>0</span></p>
+                <img id="profilePicDisplay" class="profile-pic" src="">
+            </div>
 
-        <!-- Manual Post Section -->
-        <div id="manualPostSection" class="hidden">
-            <input type="file" id="imageInput" accept="image/*">
-            <input type="text" id="captionInput" placeholder="Add a caption, Sophia!">
-            <button onclick="window.createManualPost()">Post It! 💕</button>
-        </div>
+            <!-- Game Controls -->
+            <div class="game-controls">
+                <button onclick="window.generatePost()">Generate Post 📸</button>
+                <button onclick="window.toggleManualPost()">Manual Post ✍️</button>
+                <button onclick="window.liveStream()">Go Live 🎥</button>
+                <button onclick="window.shareProfile()">Share Profile 📲</button>
+                <button id="sortButton" onclick="window.cycleSortPosts()">Sort by Highest ↓</button>
+                <button onclick="window.showAccountSwitcher()">Switch Accounts 🌟</button>
+            </div>
 
-        <!-- Tab Buttons -->
-        <div class="tab-buttons">
-            <button onclick="showTab('postsTab')">Posts</button>
-            <button onclick="showTab('notificationsTab')">Notifications</button>
-            <button onclick="showTab('likesTab')">Likes</button>
-            <button onclick="showTab('commentsTab')">Comments</button>
-            <button onclick="showTab('profileTab')">Profile</button>
-        </div>
+            <!-- Manual Post Section -->
+            <div id="manualPostSection" class="hidden">
+                <input type="file" id="imageInput" accept="image/*">
+                <input type="text" id="captionInput" placeholder="Add a caption, Sophia!">
+                <button onclick="window.createManualPost()">Post It! 💕</button>
+            </div>
 
-        <!-- Tabs -->
-        <div id="postsTab" class="tab active">
-            <div id="feed"></div>
-        </div>
+            <!-- Tab Buttons -->
+            <div class="tab-buttons tabs">
+                <button class="tab-button" onclick="showTab('postsTab')">Posts</button>
+                <button class="tab-button" onclick="showTab('notificationsTab')">Notifications</button>
+                <button class="tab-button" onclick="showTab('likesTab')">Likes</button>
+                <button class="tab-button" onclick="showTab('commentsTab')">Comments</button>
+                <button class="tab-button" onclick="showTab('profileTab')">Profile</button>
+                <button class="tab-button" onclick="showTab('shopTab')">Shop</button>
+            </div>
 
-        <div id="notificationsTab" class="tab">
-            <div id="notifications"></div>
-        </div>
+            <!-- Tabs -->
+            <div id="postsTab" class="tab section active">
+                <div id="feed"></div>
+            </div>
+            <div id="notificationsTab" class="tab section hidden">
+                <div id="notifications"></div>
+            </div>
+            <div id="likesTab" class="tab section hidden">
+                <div id="likesFeed"></div>
+            </div>
+            <div id="commentsTab" class="tab section hidden">
+                <div id="commentsFeed"></div>
+            </div>
+            <div id="profileTab" class="tab section hidden">
+                <h3>Edit Profile, Sophia! 💖</h3>
+                <input type="text" id="editUsername" placeholder="New Username">
+                <input type="file" id="editProfilePicInput" accept="image/*" onchange="window.previewEditProfilePic(event)">
+                <img id="editProfilePicPreview" class="hidden" style="max-width: 100px; margin: 10px 0;">
+                <button onclick="window.saveProfileChanges()">Save Changes ✨</button>
+            </div>
+            <div id="shopTab" class="tab section hidden">
+                <p>Money: $<span id="shopMoneyDisplay">0</span></p>
+                <div class="shop-items">
+                    <div class="shop-item">
+                        <p>Follower Boost (+500) - $200</p>
+                        <button onclick="window.buyFollowerBoost()">Buy 🌟</button>
+                    </div>
+                    <div class="shop-item">
+                        <p>Engagement Boost (Next Post +50%) - $100</p>
+                        <button onclick="window.buyEngagementBoost()">Buy 📈</button>
+                    </div>
+                    <div class="shop-item">
+                        <p>Profile Glitter - $50</p>
+                        <button onclick="window.buyProfileGlitter()">Buy ✨</button>
+                    </div>
+                </div>
+            </div>
 
-        <div id="likesTab" class="tab">
-            <div id="likesFeed"></div>
-        </div>
+            <!-- Account Switcher Modal -->
+            <div id="accountSwitcherModal" class="modal hidden">
+                <div class="modal-content">
+                    <h3>Switch Accounts, Sophia! 🌟</h3>
+                    <div id="accountList"></div>
+                    <button onclick="window.hideAccountSwitcher()">Close 💔</button>
+                    <button onclick="window.addNewAccount()">Add New Account ✨</button>
+                </div>
+            </div>
 
-        <div id="commentsTab" class="tab">
-            <div id="commentsFeed"></div>
-        </div>
+            <!-- Admin Password Modal -->
+            <div id="passwordModal" class="admin-modal hidden">
+                <div class="admin-content">
+                    <h2>Admin Access, Sophia! 👑</h2>
+                    <input type="password" id="adminPasswordInput" placeholder="Password, princess!">
+                    <button onclick="validatePassword()">Enter ✨</button>
+                    <button onclick="hidePasswordModal()">Cancel 💔</button>
+                </div>
+            </div>
 
-        <div id="profileTab" class="tab">
-            <h3>Edit Profile, Sophia! 💖</h3>
-            <input type="text" id="editUsername" placeholder="New Username">
-            <input type="file" id="editProfilePicInput" accept="image/*" onchange="window.previewEditProfilePic(event)">
-            <img id="editProfilePicPreview" class="hidden" style="max-width: 100px; margin: 10px 0;">
-            <button onclick="window.saveProfileChanges()">Save Changes ✨</button>
+            <!-- Admin Panel -->
+            <div id="adminPanel" class="admin-modal hidden">
+                <div class="admin-content">
+                    <h2>Admin Panel, My Pink Queen! 💖</h2>
+                    <div class="admin-controls">
+                        <label>Followers: <input type="number" id="adminFollowers" min="0"></label>
+                        <label>Money: <input type="number" id="adminMoney" min="0"></label>
+                        <label>Money Multiplier: <input type="number" id="adminMoneyMultiplier" min="1" step="0.1"></label>
+                        <label>Post Count: <input type="number" id="adminPostCount" min="0"></label>
+                        <label>Verified: <input type="checkbox" id="admin FELVerified"></label>
+                        <label>Famous: <input type="checkbox" id="adminFamous"></label>
+                        <label>Paranoid Mode: <input type="checkbox" id="adminParanoid"></label>
+                    </div>
+                    <button onclick="applyAdminChanges()">Apply Changes 🌟</button>
+                    <button onclick="hideAdminPanel()">Close 💔</button>
+                    <button onclick="resetGameFromAdmin()">Reset Game ⚠️</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -194,12 +264,22 @@
     <script src="game.js"></script>
     <script>
         function showTab(tabId) {
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            if (typeof window.updateUI === 'function') {
-                window.updateUI(); // Update UI when switching tabs
-            }
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            const clickedButton = Array.from(document.querySelectorAll('.tab-button')).find(btn => btn.onclick.toString().includes(tabId));
+            if (clickedButton) clickedButton.classList.add('active');
+            if (typeof window.updateUI === 'function') window.updateUI();
+        }
+
+        // Define signup() since it was in your original but not in script.js
+        function signup() {
+            document.getElementById('appSection').classList.add('hidden');
+            document.getElementById('signupSection').classList.remove('hidden');
+            window.addNewAccount(); // Reuse the existing function from script.js
         }
     </script>
+    <!-- Restoring your Cloudflare script -->
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'91ed0ecfab313dd7',t:'MTc0MTcxNzE0My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
