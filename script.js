@@ -379,11 +379,13 @@ window.showAccountSwitcher = function() {
         accountList.appendChild(div);
     });
     modal.classList.remove('hidden');
+    console.log('Account switcher shown for Sophia');
 };
 
 window.hideAccountSwitcher = function() {
     const modal = document.getElementById('accountSwitcherModal');
     if (modal) modal.classList.add('hidden');
+    console.log('Account switcher hidden for Sophia');
 };
 
 window.switchAccount = function(index) {
@@ -435,12 +437,13 @@ function showPasswordModal() {
         return;
     }
     passwordModal.classList.remove('hidden');
-    document.getElementById('adminPasswordInput').value = '';
+    console.log('Password modal shown for Sophia');
 }
 
 function hidePasswordModal() {
     const passwordModal = document.getElementById('passwordModal');
     if (passwordModal) passwordModal.classList.add('hidden');
+    console.log('Password modal hidden for Sophia');
 }
 
 function validatePassword() {
@@ -467,11 +470,13 @@ function showAdminPanel() {
     document.getElementById('adminVerified').checked = window.user.verified || false;
     document.getElementById('adminFamous').checked = window.user.famous || false;
     document.getElementById('adminParanoid').checked = window.paranoidMode || false;
+    console.log('Admin panel shown for Sophia');
 }
 
 function hideAdminPanel() {
     const panel = document.getElementById('adminPanel');
     if (panel) panel.classList.add('hidden');
+    console.log('Admin panel hidden for Sophia');
     updateUI();
 }
 
@@ -590,11 +595,13 @@ function finishAccountCreation(newUser) {
     document.getElementById('usernameDisplay').textContent = window.user.username;
     document.getElementById('profilePicDisplay').src = window.user.profilePic;
     
-    // Explicitly hide modals after signup
+    // Explicitly hide all modals after signup
     const adminPanel = document.getElementById('adminPanel');
     const accountSwitcherModal = document.getElementById('accountSwitcherModal');
+    const passwordModal = document.getElementById('passwordModal');
     if (adminPanel) adminPanel.classList.add('hidden');
     if (accountSwitcherModal) accountSwitcherModal.classList.add('hidden');
+    if (passwordModal) passwordModal.classList.add('hidden');
     
     window.addNotification(`Welcome to Simsta, ${window.user.username}, Sophia! 💕`, false);
     if (window.simulateInitialFollowers) window.simulateInitialFollowers();
@@ -629,8 +636,10 @@ function updateUI() {
     // Ensure modals stay hidden unless explicitly called
     const adminPanel = document.getElementById('adminPanel');
     const accountSwitcherModal = document.getElementById('accountSwitcherModal');
+    const passwordModal = document.getElementById('passwordModal');
     if (adminPanel && !adminPanel.classList.contains('hidden')) adminPanel.classList.add('hidden');
     if (accountSwitcherModal && !accountSwitcherModal.classList.contains('hidden')) accountSwitcherModal.classList.add('hidden');
+    if (passwordModal && !passwordModal.classList.contains('hidden')) passwordModal.classList.add('hidden');
 
     const usernameDisplay = document.getElementById('usernameDisplay');
     usernameDisplay.style.background = 'linear-gradient(45deg, #ff69b4, #00ffff)';
@@ -649,6 +658,7 @@ function updateUI() {
     }
 
     if (autoSaveEnabled) saveUserData();
+    console.log('updateUI ran, modals should be hidden for Sophia');
 }
 
 console.log('Calling loadUserData for Sophia!');
