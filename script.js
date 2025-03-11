@@ -23,7 +23,7 @@ let notificationQueue = [];
 let isNotificationActive = false;
 window.isUserLoaded = false;
 
-// Utility function for formatting numbers (was missing!)
+// Utility function for formatting numbers
 window.formatNumber = function(num) {
     if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(2).replace(/\.?0+$/, '') + 'B';
     if (num >= 1_000_000) return (num / 1_000_000).toFixed(2).replace(/\.?0+$/, '') + 'M';
@@ -211,7 +211,8 @@ function loadUserData() {
                         liked: post.liked || false,
                         caption: post.caption || '',
                         hashtags: Array.isArray(post.hashtags) ? post.hashtags : [],
-                        imageData: post.imageData || ''
+                        imageData: post.imageData || '',
+                        timestamp: post.timestamp || Date.now()
                     }));
                     Object.keys(window.generatedAccounts).forEach(username => {
                         if (!window.generatedAccounts[username].followers) {
@@ -401,7 +402,7 @@ function importUserData(event) {
             window.addNotification('Data imported, Sophia! Slay it, babe! 📥', false);
             updateUI();
             if (window.growthLoopId) clearInterval(window.growthLoopId);
-            window.startGrowthLoop && window.startGrowthLoop(); // Check if function exists
+            if (window.startGrowthLoop) window.startGrowthLoop();
         } catch (err) {
             console.error('Import error:', err);
             alert('Failed to import data, princess!');
@@ -495,7 +496,7 @@ window.switchAccount = function(index) {
     window.hideAccountSwitcher();
     updateUI();
     if (window.growthLoopId) clearInterval(window.growthLoopId);
-    window.startGrowthLoop && window.startGrowthLoop();
+    if (window.startGrowthLoop) window.startGrowthLoop();
     window.addNotification(`Switched to ${window.user.username}, Sophia! ✨`, true);
 };
 
@@ -595,12 +596,18 @@ function applyAdminChanges() {
     const moneyMultiplier = parseFloat(document.getElementById('adminMoneyMultiplier').value) || 1;
     window.user.money = Math.floor(newMoney * moneyMultiplier);
     const newPostCount = parseInt(document.getElementById('adminPostCount').value) || 0;
-    adjustPostCount(newPostCount); // Needs game.js to define this
+    // Adjust post count (moved from game.js dependency)
+    while (window.user.posts.length < newPostCount) {
+        window.generatePost && window.generatePost(true); // Silent post generation
+    }
+    while (window.user.posts.length > newPostCount) {
+        window.user.posts.pop();
+    }
     window.user.verified = document.getElementById('adminVerified').checked;
     window.user.famous = document.getElementById('adminFamous').checked;
     const newParanoid = document.getElementById('adminParanoid').checked;
-    if (newParanoid !== window.paranoidMode) window.toggleParanoidMode && window.toggleParanoidMode();
-    window.calculateMoneyFromLikes && window.calculateMoneyFromLikes();
+    if (newParanoid !== window.paranoidMode && window.toggleParanoidMode) window.toggleParanoidMode();
+    if (window.calculateMoneyFromLikes) window.calculateMoneyFromLikes();
     saveUserData();
     window.addNotification('Admin changes applied, Sophia! Slay! ✨', false);
     hideAdminPanel();
@@ -713,11 +720,11 @@ function finishAccountCreation(newUser) {
     document.getElementById('usernameDisplay').textContent = window.user.username;
     document.getElementById('profilePicDisplay').src = window.user.profilePic;
     window.addNotification(`Welcome to Simsta, ${window.user.username}, Sophia! 💕`, false);
-    window.simulateInitialFollowers && window.simulateInitialFollowers();
+    if (window.simulateInitialFollowers) window.simulateInitialFollowers();
     if (autoSaveEnabled) saveUserData();
-    window.closeSelfieSnap && window.closeSelfieSnap();
+    if (window.closeSelfieSnap) window.closeSelfieSnap();
     if (window.growthLoopId) clearInterval(window.growthLoopId);
-    window.startGrowthLoop && window.startGrowthLoop();
+    if (window.startGrowthLoop) window.startGrowthLoop();
     updateUI();
 }
 
@@ -740,7 +747,7 @@ function resetAccount() {
         window.accounts[window.currentAccountIndex] = newUser;
         window.user = newUser;
         if (window.growthLoopId) clearInterval(window.growthLoopId);
-        window.startGrowthLoop && window.startGrowthLoop();
+        if (window.startGrowthLoop) window.startGrowthLoop();
         saveUserData();
         window.addNotification('Account reset, fresh start, babe! 🌸', false);
         updateUI();
@@ -801,9 +808,9 @@ function updateUI() {
     if (!window.user) {
         document.getElementById('signupSection').classList.remove('hidden');
         document.getElementById('appSection').classList.add('hidden');
-        document.getElementById('adminPanel') && document.getElementById('adminPanel').classList.add('hidden');
-        document.getElementById('passwordModal') && document.getElementById('passwordModal').classList.add('hidden');
-        document.getElementById('accountSwitcherModal') && document.getElementById('accountSwitcherModal').classList.add('hidden');
+        document.getElementById('adminPanel')?.classList.add('hidden');
+        document.getElementById('passwordModal')?.classList.add('hidden');
+        document.getElementById('accountSwitcherModal')?.classList.add('hidden');
         if (currentDeleteUI) currentDeleteUI.remove();
         return;
     }
@@ -822,7 +829,7 @@ function updateUI() {
     usernameDisplay.classList.toggle('glitter', hasProfileGlitter);
     document.getElementById('profilePicDisplay').src = window.user.profilePic;
     document.getElementById('followerCount').textContent = window.formatNumber(window.user.followers);
-    document.getElementById('postCount').textContent = window.formatNumber(window.user.posts.length);
+    document.getElementById('postCount')?.textContent = window.formatNumber(window.user.posts.length); // Optional since not in HTML yet
     document.getElementById('moneyDisplay').textContent = `Money: $${window.formatNumber(window.user.money)}`;
     if (document.getElementById('shopMoneyDisplay')) {
         document.getElementById('shopMoneyDisplay').textContent = window.formatNumber(window.user.money);
@@ -833,38 +840,38 @@ function updateUI() {
         const tabId = activeTab.onclick.toString().match(/'([^']+)'/)[1];
         switch (tabId) {
             case 'postsTab':
-                window.renderPosts && window.renderPosts();
+                if (window.renderPosts) window.renderPosts();
                 window.renderTrashBin();
                 break;
             case 'notificationsTab':
-                window.renderNotifications && window.renderNotifications();
+                if (window.renderNotifications) window.renderNotifications();
                 break;
             case 'likesTab':
-                window.renderLikes && window.renderLikes();
+                if (window.renderLikes) window.renderLikes();
                 break;
             case 'commentsTab':
-                window.renderComments && window.renderComments();
+                if (window.renderComments) window.renderComments();
                 break;
             case 'generatedAccountsTab':
-                window.renderGeneratedPosts && window.renderGeneratedPosts();
+                if (window.renderGeneratedPosts) window.renderGeneratedPosts();
                 break;
             case 'profileTab':
-                window.renderProfileTab && window.renderProfileTab();
+                if (window.renderProfileTab) window.renderProfileTab();
                 break;
             case 'aiAccountsTab':
-                window.renderAIAccounts && window.renderAIAccounts();
+                if (window.renderAIAccounts) window.renderAIAccounts();
                 break;
             case 'messagesTab':
-                window.renderMessages && window.renderMessages();
+                if (window.renderMessages) window.renderMessages();
                 break;
             case 'shopTab':
-                window.renderShopTab && window.renderShopTab();
+                if (window.renderShopTab) window.renderShopTab();
                 break;
         }
     }
 
     if (window.growthLoopId) clearInterval(window.growthLoopId);
-    window.startGrowthLoop && window.startGrowthLoop();
+    if (window.startGrowthLoop) window.startGrowthLoop();
     if (autoSaveEnabled) saveUserData();
 }
 
@@ -944,8 +951,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.user) {
                     document.getElementById('signupSection').classList.add('hidden');
                     document.getElementById('appSection').classList.remove('hidden');
-                    if (window.virtualBaeActive) window.toggleVirtualBae && window.toggleVirtualBae();
-                    if (window.paranoidMode) window.toggleParanoidMode && window.toggleParanoidMode();
+                    if (window.virtualBaeActive && window.toggleVirtualBae) window.toggleVirtualBae();
+                    if (window.paranoidMode && window.toggleParanoidMode) window.toggleParanoidMode();
                     updateUI();
                     window.dispatchEvent(new Event('userLoaded'));
                 } else {
