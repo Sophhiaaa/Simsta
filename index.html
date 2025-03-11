@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simsta - Ultimate Girly Insta Sim</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Load scripts in the head to ensure they're ready before the body loads -->
-    <script src="script.js"></script>
-    <script src="game-utils.js"></script>
-    <script src="game-sort.js"></script>
-    <script src="game-new-features.js"></script>
-    <script src="game.js"></script>
+    <!-- Load scripts with defer to ensure they’re ready after HTML -->
+    <script src="script.js" defer></script>
+    <script src="game-utils.js" defer></script>
+    <script src="game-sort.js" defer></script>
+    <script src="game-new-features.js" defer></script>
+    <script src="game.js" defer></script>
 </head>
 <body>
     <div class="container">
@@ -151,8 +151,15 @@
         </div>
     </div>
 
-    <!-- Inline script moved after all other scripts -->
+    <!-- Inline script with debugging -->
     <script>
+        // Check if functions are available
+        window.addEventListener('load', function() {
+            console.log('Page loaded, Sophia! Checking signup buttons...');
+            console.log('createAccount:', typeof createAccount === 'function' ? 'Ready!' : 'Not found!');
+            console.log('window.generateUsername:', typeof window.generateUsername === 'function' ? 'Ready!' : 'Not found!');
+        });
+
         function showTab(tabId) {
             document.querySelectorAll('.tab').forEach(tab => tab.classList.add('hidden'));
             document.getElementById(tabId).classList.remove('hidden');
