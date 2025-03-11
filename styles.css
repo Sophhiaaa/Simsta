@@ -1,11 +1,18 @@
+/* Your original styles.css with index.html styles added, Sophia! 💕 */
+
 body {
-    font-family: 'Comic Sans MS', cursive, sans-serif;
+    font-family: 'Comic Sans MS', cursive, sans-serif; /* Cute font from original */
     margin: 20px;
-    background: linear-gradient(135deg, #ffe6f2, #ffb6c1);
-    color: #ff69b4;
-    transition: background 0.5s;
-    position: relative;
-    overflow-x: hidden;
+    background: linear-gradient(135deg, #ff69b4, #00ffff); /* Smudge Gradient Pink Cyan from index.html */
+    color: #333; /* Default text color from index.html */
+    padding: 20px; /* Padding from index.html */
+    min-height: 100vh; /* Full height from index.html */
+    display: flex; /* Flex layout from index.html */
+    justify-content: center; /* Center horizontally from index.html */
+    align-items: flex-start; /* Align top from index.html */
+    transition: background 0.5s; /* Smooth background change from original */
+    position: relative; /* For the background pattern from original */
+    overflow-x: hidden; /* No horizontal scroll from original */
 }
 
 body::after {
@@ -32,44 +39,54 @@ body::after {
 }
 
 .container {
-    max-width: 700px;
-    margin: auto;
-    background: #fff0f5;
-    padding: 20px;
-    border-radius: 20px;
-    box-shadow: 0 0 20px rgba(255, 105, 180, 0.5);
-    position: relative;
-    z-index: 1;
+    max-width: 800px; /* Updated from index.html */
+    width: 100%; /* Full width from index.html */
+    margin: auto; /* Centered from original */
+    background: rgba(255, 255, 255, 0.9); /* Slightly transparent white from index.html */
+    padding: 20px; /* Padding from index.html */
+    border-radius: 15px; /* Rounded corners from index.html */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Shadow from index.html */
+    position: relative; /* For z-index from original */
+    z-index: 1; /* Above background pattern from original */
 }
 
 .section {
-    margin-bottom: 20px;
+    margin-bottom: 20px; /* Spacing from original */
+}
+
+h1 {
+    text-align: center; /* Centered from index.html */
+    color: #ff1493; /* Deep Pink from index.html */
+    margin: 0 0 20px 0; /* Margin from index.html */
 }
 
 input, textarea, button {
-    width: 100%;
-    margin: 5px 0;
-    padding: 5px;
-    border: 2px solid #ff69b4;
-    border-radius: 15px;
-    box-sizing: border-box;
-    font-family: 'Comic Sans MS', cursive;
-    background: #fff;
+    width: 100%; /* Full width from original */
+    margin: 5px 0; /* Spacing from original */
+    padding: 5px; /* Padding from original */
+    border: 2px solid #ff69b4; /* Pink border from original */
+    border-radius: 15px; /* Rounded corners from original */
+    box-sizing: border-box; /* Include padding in size from original */
+    font-family: 'Comic Sans MS', cursive; /* Cute font from original */
+    background: #fff; /* White background from original */
 }
 
 button {
-    background: linear-gradient(45deg, #ff69b4, #ff1493);
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.2s;
-    min-height: 30px;
-    font-size: 14px;
+    padding: 10px 20px; /* Larger padding from index.html */
+    border: none; /* No border from index.html */
+    border-radius: 5px; /* Slightly less rounded from index.html */
+    background: #ff69b4; /* Hot Pink from index.html */
+    color: white; /* White text from index.html */
+    cursor: pointer; /* Hand cursor from index.html */
+    transition: background 0.3s, transform 0.2s; /* Combined transitions */
+    min-height: 30px; /* Minimum height from original */
+    font-size: 14px; /* Font size from original */
 }
 
 button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 15px rgba(255, 105, 180, 0.7);
+    background: #00ced1; /* Cyan hover from index.html */
+    transform: scale(1.05); /* Slight grow from original */
+    box-shadow: 0 0 15px rgba(255, 105, 180, 0.7); /* Glow from original */
 }
 
 button:disabled {
@@ -79,18 +96,35 @@ button:disabled {
 }
 
 button:active {
-    transform: scale(0.95);
+    transform: scale(0.95); /* Shrink on click from original */
+}
+
+.admin-section, .profile-info, .game-controls, .tab-buttons {
+    margin-bottom: 20px; /* Spacing from index.html */
+}
+
+.admin-section, .game-controls, .tab-buttons {
+    display: flex; /* Flex layout from index.html */
+    flex-wrap: wrap; /* Wrap items from index.html */
+    gap: 10px; /* Spacing between items from index.html */
+    justify-content: center; /* Centered from index.html */
+}
+
+.profile-info p {
+    margin: 5px 0; /* Spacing from index.html */
+    text-align: center; /* Centered from index.html */
 }
 
 .post {
-    background: #fff;
-    padding: 15px;
-    border-radius: 15px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 5px rgba(255, 105, 180, 0.2);
-    position: relative;
-    z-index: 1;
-    transition: transform 0.5s ease;
+    border: 1px solid #ff69b4; /* Pink border from index.html */
+    padding: 10px; /* Padding from index.html */
+    margin: 10px 0; /* Margin from index.html */
+    border-radius: 5px; /* Corners from index.html */
+    background: white; /* White background from index.html */
+    box-shadow: 0 2px 5px rgba(255, 105, 180, 0.2); /* Shadow from original */
+    position: relative; /* For z-index from original */
+    z-index: 1; /* Above background from original */
+    transition: transform 0.5s ease; /* Animation from original */
 }
 
 .trashed {
@@ -105,9 +139,94 @@ button:active {
 }
 
 .hidden {
-    display: none;
+    display: none; /* Hidden class from both */
 }
 
+.tab {
+    display: none; /* Hidden by default from index.html */
+}
+
+.tab.active {
+    display: block; /* Shown when active from index.html */
+}
+
+.post-stats, .post-buttons {
+    margin-top: 5px; /* Spacing from index.html */
+    display: flex; /* Flex layout from index.html */
+    gap: 10px; /* Spacing from index.html */
+    align-items: center; /* Centered vertically from index.html */
+}
+
+.like-button {
+    cursor: pointer; /* Hand cursor from index.html */
+    font-size: 20px; /* Size from index.html */
+    margin-right: 10px; /* Spacing from index.html */
+    display: inline-block; /* From original */
+    transition: transform 0.2s; /* From original */
+}
+
+.like-button:hover {
+    transform: scale(1.2); /* Grow on hover from original */
+}
+
+.liked {
+    color: #ff1493; /* Pink when liked from index.html */
+    animation: heartBeat 0.5s; /* Animation from original */
+}
+
+@keyframes heartBeat {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+.comment-center {
+    margin-top: 10px; /* Spacing from index.html */
+    padding: 10px; /* Padding from original */
+    background: #fff0f5; /* Light pink from original */
+    border-radius: 10px; /* Rounded from original */
+}
+
+.comment-input {
+    display: flex; /* Flex layout from index.html */
+    gap: 5px; /* Spacing from index.html */
+}
+
+.comment-input input {
+    flex: 1; /* Grow to fill space from index.html */
+    padding: 5px; /* Padding from index.html */
+}
+
+.admin-modal {
+    position: fixed; /* Fixed position from index.html */
+    top: 0; /* Top edge from index.html */
+    left: 0; /* Left edge from index.html */
+    width: 100%; /* Full width from index.html */
+    height: 100%; /* Full height from index.html */
+    background: rgba(0, 0, 0, 0.5); /* Dark overlay from index.html */
+    display: flex; /* Flex layout from index.html */
+    justify-content: center; /* Centered horizontally from index.html */
+    align-items: center; /* Centered vertically from index.html */
+}
+
+.admin-content {
+    background: white; /* White background from index.html */
+    padding: 20px; /* Padding from index.html */
+    border-radius: 10px; /* Corners from index.html */
+    text-align: center; /* Centered text from index.html */
+    max-width: 400px; /* Max width from index.html */
+    width: 90%; /* Responsive width from index.html */
+    box-shadow: 0 0 20px rgba(255, 105, 180, 0.7); /* Glow from original */
+}
+
+#manualPostSection {
+    margin-top: 10px; /* Spacing from index.html */
+    display: flex; /* Flex layout from index.html */
+    flex-direction: column; /* Vertical stack from index.html */
+    gap: 10px; /* Spacing from index.html */
+}
+
+/* Adding missing styles from original styles.css */
 img {
     max-width: 100%;
     border-radius: 10px;
@@ -174,28 +293,6 @@ img {
     text-shadow: 0 0 5px #ff69b4;
 }
 
-.like-button {
-    font-size: 20px;
-    cursor: pointer;
-    display: inline-block;
-    transition: transform 0.2s;
-}
-
-.like-button:hover {
-    transform: scale(1.2);
-}
-
-.liked {
-    color: #ff1493;
-    animation: heartBeat 0.5s;
-}
-
-@keyframes heartBeat {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.3); }
-    100% { transform: scale(1); }
-}
-
 .post-buttons {
     display: flex;
     gap: 10px;
@@ -224,26 +321,10 @@ img {
     box-shadow: 0 0 15px rgba(255, 105, 180, 0.7);
 }
 
-.comment-center {
-    margin-top: 10px;
-    padding: 10px;
-    background: #fff0f5;
-    border-radius: 10px;
-}
-
 .comment-list {
     max-height: 100px;
     overflow-y: auto;
     margin-bottom: 10px;
-}
-
-.comment-input {
-    display: flex;
-    gap: 5px;
-}
-
-.comment-input input {
-    width: 70%;
 }
 
 .comment-input button {
@@ -251,13 +332,6 @@ img {
     padding: 5px;
     min-height: 30px;
     font-size: 14px;
-}
-
-.post-stats {
-    display: flex;
-    gap: 15px;
-    margin-top: 5px;
-    align-items: center;
 }
 
 .refresh-button {
@@ -322,32 +396,8 @@ img {
     z-index: 1000;
 }
 
-/* Admin Modal Styles */
-.admin-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 105, 180, 0.5);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-}
-
 .admin-modal:not(.hidden) {
     display: flex;
-}
-
-.admin-content {
-    background: #fff0f5;
-    padding: 20px;
-    border-radius: 20px;
-    box-shadow: 0 0 20px rgba(255, 105, 180, 0.7);
-    max-width: 400px;
-    width: 90%;
-    text-align: center;
 }
 
 .admin-content h2 {
@@ -404,7 +454,6 @@ img {
     width: auto;
 }
 
-/* Profile Edit Styles */
 .profile-edit {
     display: flex;
     flex-direction: column;
@@ -433,7 +482,6 @@ img {
     font-size: 14px;
 }
 
-/* AI Accounts Styles */
 .ai-account {
     background: #fff;
     padding: 15px;
@@ -458,7 +506,6 @@ img {
     border-bottom: 1px dashed #ffb6c1;
 }
 
-/* Shop Styles */
 .shop-items {
     display: flex;
     flex-direction: column;
@@ -490,7 +537,6 @@ img {
     min-height: 30px;
 }
 
-/* Glitter Effect */
 .glitter {
     background: linear-gradient(45deg, #ff69b4, #ffd700);
     -webkit-background-clip: text;
@@ -506,7 +552,6 @@ img {
     100% { background-position: 0% 50%; }
 }
 
-/* Trash Bin Styles */
 #trashSection {
     margin-top: 20px;
     padding: 10px;
@@ -544,12 +589,6 @@ img {
     100% { transform: translateX(100vw); opacity: 0; }
 }
 
-/* Custom Delete UI (Removed since we’re using trash) */
-.custom-delete-ui {
-    display: none; /* Disable since we’re using trash instead */
-}
-
-/* Shoutout Button Styles */
 .shoutout-button {
     background: linear-gradient(45deg, #ff99cc, #ffb6c1);
     border: none;
@@ -567,7 +606,6 @@ img {
     box-shadow: 0 0 15px rgba(255, 105, 180, 0.7);
 }
 
-/* Notification Toast */
 .notification-toast {
     position: fixed;
     bottom: 20px;
@@ -575,82 +613,44 @@ img {
     background: #ff99cc;
     color: white;
     padding: 10px 20px;
-    border-radius: 15px; /* Match the rounded corners in the screenshot */
+    border-radius: 15px;
     z-index: 1000;
     animation: fadeInOut 3s ease-in-out forwards;
-    display: inline-block; /* Fit content width */
-    box-sizing: border-box; /* Ensure padding doesn’t inflate size */
-    font-size: 14px; /* Match text size in screenshot */
-    line-height: 1.2; /* Compact vertical spacing */
-    max-width: 300px; /* Cap width to prevent stretching beyond text */
+    display: inline-block;
+    box-sizing: border-box;
+    font-size: 14px;
+    line-height: 1.2;
+    max-width: 300px;
 }
 
 @media (max-width: 600px) {
     .notification-toast {
-        font-size: 12px; /* Slightly smaller for mobile */
-        padding: 8px 16px; /* Adjusted padding for mobile */
-        max-width: 250px; /* Smaller cap for mobile */
+        font-size: 12px;
+        padding: 8px 16px;
+        max-width: 250px;
     }
-}
-
-/* Header and Navigation Styles */
-header {
-    background: linear-gradient(135deg, #ffe6f2, #ffb6c1);
-    padding: 10px 0;
-    box-shadow: 0 2px 10px rgba(255, 105, 180, 0.5);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-}
-
-nav button {
-    padding: 10px 20px;
-    font-size: 16px;
-    border-radius: 15px;
-    margin: 5px;
-    transition: all 0.3s;
-}
-
-nav button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 10px rgba(255, 105, 180, 0.7);
-}
-
-/* Responsive Design */
-@media (max-width: 600px) {
     .save-options, .social-buttons, .fame-buttons, .tabs {
         flex-direction: column;
     }
     .save-options button, .social-buttons button, .fame-buttons button, .tab-button {
         flex: none;
         width: 100%;
-        padding: 4px 8px; /* Smaller padding for mobile */
-        font-size: 12px; /* Smaller font size */
-        min-height: 28px; /* Slightly smaller height */
-    }
-    /* Specific button types */
-    button {
-        padding: 4px 8px; /* General button size reduction */
+        padding: 4px 8px;
         font-size: 12px;
         min-height: 28px;
     }
-    .trash-button, .refresh-button, .shoutout-button, .comment-input button, .admin-content button, .modal-content button, .shop-item button {
-        padding: 4px 8px; /* Consistent smaller padding */
+    button {
+        padding: 4px 8px;
+        font-size: 12px;
+        min-height: 28px;
+    }
+    .trash-button, .refresh-button, .shoutout-button, .comment-input button, .admin-content button {
+        padding: 4px 8px;
         font-size: 12px;
         min-height: 28px;
     }
     .admin-content {
         width: 95%;
-    }
-    .custom-delete-ui {
-        width: 90%;
-        left: 5% !important;
-        top: auto !important;
-        bottom: 20px;
-    }
-    nav button {
-        font-size: 12px;
-        padding: 6px 12px;
     }
     .container {
         padding: 10px;
@@ -669,13 +669,8 @@ nav button:hover {
         font-size: 12px;
         padding: 6px;
     }
-    .notification-toast {
-        font-size: 12px; /* Slightly smaller for mobile */
-        padding: 8px 16px; /* Slightly smaller padding */
-    }
 }
 
-/* Modal Styles */
 .modal {
     position: fixed;
     top: 0;
@@ -734,7 +729,6 @@ nav button:hover {
     box-shadow: 0 0 15px rgba(255, 105, 180, 0.7);
 }
 
-/* Specific Button Styles */
 #sortButton {
     background: linear-gradient(45deg, #ff69b4, #ff1493);
     transition: transform 0.2s;
@@ -747,30 +741,6 @@ nav button:hover {
 
 #sortButton:active {
     transform: scale(0.95);
-}
-
-#shoutoutButton {
-    background: linear-gradient(45deg, #ff99cc, #ffb6c1);
-    transition: transform 0.2s;
-}
-
-#shoutoutButton:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 15px rgba(255, 105, 180, 0.7);
-}
-
-#shoutoutButton:active {
-    transform: scale(0.95);
-}
-
-#shoutoutButton.highlight {
-    background: #ffccff;
-    transition: background 0.1s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.8); }
-    to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes fadeInOut {
