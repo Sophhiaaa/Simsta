@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simsta - Ultimate Girly Insta Sim</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Load scripts in the head to ensure they're ready before the body loads -->
+    <script src="script.js"></script>
+    <script src="game-utils.js"></script>
+    <script src="game-sort.js"></script>
+    <script src="game-new-features.js"></script>
+    <script src="game.js"></script>
 </head>
 <body>
     <div class="container">
@@ -145,13 +151,7 @@
         </div>
     </div>
 
-    <!-- Load all the split scripts -->
-    <script src="script.js"></script>
-    <script src="game-utils.js"></script>
-    <script src="game-sort.js"></script>
-    <script src="game-new-features.js"></script>
-    <script src="game.js"></script>
-
+    <!-- Inline script moved after all other scripts -->
     <script>
         function showTab(tabId) {
             document.querySelectorAll('.tab').forEach(tab => tab.classList.add('hidden'));
